@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		DAF7641B2B5182CB003B09FF /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = DAF7641A2B5182CB003B09FF /* main.c */; };
+		DAF764262B5184EA003B09FF /* prg.cl in Sources */ = {isa = PBXBuildFile; fileRef = DAF764252B5184EA003B09FF /* prg.cl */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,11 @@
 /* Begin PBXFileReference section */
 		DAF764172B5182CB003B09FF /* frac2 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = frac2; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAF7641A2B5182CB003B09FF /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		DAF764212B5184B0003B09FF /* msh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = msh.h; sourceTree = "<group>"; };
+		DAF764222B5184BC003B09FF /* ocl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ocl.h; sourceTree = "<group>"; };
+		DAF764232B5184C7003B09FF /* io.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = io.h; sourceTree = "<group>"; };
+		DAF764242B5184D2003B09FF /* slv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = slv.h; sourceTree = "<group>"; };
+		DAF764252B5184EA003B09FF /* prg.cl */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.opencl; path = prg.cl; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +64,11 @@
 			isa = PBXGroup;
 			children = (
 				DAF7641A2B5182CB003B09FF /* main.c */,
+				DAF764212B5184B0003B09FF /* msh.h */,
+				DAF764222B5184BC003B09FF /* ocl.h */,
+				DAF764242B5184D2003B09FF /* slv.h */,
+				DAF764232B5184C7003B09FF /* io.h */,
+				DAF764252B5184EA003B09FF /* prg.cl */,
 			);
 			path = frac2;
 			sourceTree = "<group>";
@@ -120,6 +131,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DAF7641B2B5182CB003B09FF /* main.c in Sources */,
+				DAF764262B5184EA003B09FF /* prg.cl in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
