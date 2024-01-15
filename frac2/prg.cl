@@ -619,30 +619,22 @@ kernel void vtx_init(const  int3    vtx_dim,
     int  vtx1_idx1 = fn_idx1(vtx1_pos1, vtx_dim);
 //    printf("vtx_dim %v3d\n", vtx_dim);
 
-//    //coord
-//    float3 x = x0 + dx*convert_float3(vtx1_pos1);
-//    vtx_xx[3*vtx1_idx1+0] = x.x;
-//    vtx_xx[3*vtx1_idx1+1] = x.y;
-//    vtx_xx[3*vtx1_idx1+2] = x.z;
-//    
-//    //u
-//    for(int dim1=0; dim1<3; dim1++)
-//    {
-//        //u
-//        int idx_u = 4*vtx1_idx1 + dim1;
-//        U0[idx_u] = dim1;
-//        U1[idx_u] = dim1;
-//        F1[idx_u] = dim1;
-//    }
-//    
-//    //c
-//    int idx_c = 4*vtx1_idx1 + 3;
-//    U0[idx_c] = vtx1_idx1;
-//    U1[idx_c] = vtx1_idx1;
-//    F1[idx_c] = vtx1_idx1;
-    
+    //coord
+    float3 x = x0 + dx*convert_float3(vtx1_pos1);
+    vtx_xx[3*vtx1_idx1+0] = x.x;
+    vtx_xx[3*vtx1_idx1+1] = x.y;
+    vtx_xx[3*vtx1_idx1+2] = x.z;
+   
+    //rhs
+    for(int dim1=0; dim1<4; dim1++)
+    {
+        //u
+        int idx_u = 4*vtx1_idx1 + dim1;
+        U0[idx_u] = 5e-1f;
+        U1[idx_u] = 5e-1f;
+        F1[idx_u] = 0e0f;
+    }
 
-    
     //vtx2
     for(int vtx2_idx3=0; vtx2_idx3<27; vtx2_idx3++)
     {
@@ -660,7 +652,7 @@ kernel void vtx_init(const  int3    vtx_dim,
                 int idx = 27*16*vtx1_idx1 + 16*vtx2_idx3 + 4*dim1 + dim2;
                 J_ii[idx] = vtx2_bnd1*(4*vtx1_idx1 + dim1);
                 J_jj[idx] = vtx2_bnd1*(4*vtx2_idx1 + dim2);
-                J_vv[idx] = vtx2_bnd1*(4*dim1 + dim2);
+                J_vv[idx] = 0e0f; //vtx2_bnd1*(4*dim1 + dim2 + 1);
                 
             } //dim2
             
@@ -773,9 +765,6 @@ kernel void vtx_assm(const  int3     vtx_dim,
                 float8 S2 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
                 mec_s12(D, V, mat_prm, S1, S2);
                 
-                //rhs c
-                F1[vtx1_idx1] += ((c2*p1 + mat_prm.s6*c + mat_prm.s7*(c_prev)*(c_prev<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s4*mat_prm.s5*dot(dc, bas_gg[vtx1_idx2]))*qw;
-                
                 //rhs u
                 for(int dim1=0; dim1<3; dim1++)
                 {
@@ -787,9 +776,12 @@ kernel void vtx_assm(const  int3     vtx_dim,
                     float8 E1 = mec_e(du1);
                     
                     //write
-                    F1[3*vtx1_idx1 + dim1] += sym_tip(c1*S1 + S2, E1)*qw;
+                    F1[4*vtx1_idx1 + dim1] += sym_tip(c1*S1 + S2, E1)*qw;
                 }
-
+                
+                //rhs c
+                F1[4*vtx1_idx1 + 4] += ((c2*p1 + mat_prm.s6*c + mat_prm.s7*(c_prev)*(c_prev<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s4*mat_prm.s5*dot(dc, bas_gg[vtx1_idx2]))*qw;
+               
                 //vtx2
                 for(int vtx2_idx2=0; vtx2_idx2<8; vtx2_idx2++)
                 {
@@ -798,7 +790,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
                     int  vtx2_idx3 = fn_idx3(vtx2_pos3);
                     
                     //idx
-                    int idx_cc = 27*vtx1_idx1 + vtx2_idx3;
+                    int idx_cc = 27*16*vtx1_idx1 + 16*vtx2_idx3 + 15;
                     
                     //cc write
                     J_vv[idx_cc] += ((2e0f*p1 + mat_prm.s6 + mat_prm.s7*(c_prev<0e0f))*bas_ee[vtx1_idx2]*bas_ee[vtx2_idx2] + mat_prm.s4*mat_prm.s5*dot(bas_gg[vtx1_idx2], bas_gg[vtx2_idx2]))*qw;
@@ -814,10 +806,15 @@ kernel void vtx_assm(const  int3     vtx_dim,
                         float8 E1 = mec_e(du1);
                         
                         //idx
-                        int idx_uc = 27*3*vtx1_idx1 + 3*vtx2_idx3 + dim1;
+                        int idx_uc = 27*16*vtx1_idx1 + 16*vtx2_idx3 + 4*dim1 + 3;
+                        int idx_cu = 27*16*vtx1_idx1 + 16*vtx2_idx3 + 12 + dim1;
+                        
+                        //symmetric
+                        float uccu = c2*eig_dpdu(D, V, du1, mat_prm)*bas_ee[vtx1_idx2]*qw;
                         
                         //uc write
-                        J_vv[idx_uc] += c2*eig_dpdu(D, V, du1, mat_prm)*bas_ee[vtx1_idx2]*qw;
+                        J_vv[idx_uc] += uccu;
+                        J_vv[idx_cu] += uccu;
                         
                         //dim2
                         for(int dim2=0; dim2<3; dim2++)
@@ -845,7 +842,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
                             dS2.s035 += mat_prm.s2*(trE<0e0f)*(trE2);
                             
                             //uu
-                            int idx_uu = 27*9*vtx1_idx1 + 9*vtx2_idx3 + 3*dim1 + dim2;
+                            int idx_uu = 27*16*vtx1_idx1 + 16*vtx2_idx3 + 4*dim1 + dim2;
                             
                             //write
                             J_vv[idx_uu] += (c1*sym_tip(dS1, E1) + sym_tip(dS2, E1))*qw;
@@ -855,6 +852,8 @@ kernel void vtx_assm(const  int3     vtx_dim,
                     } //dim1
                     
                 } //vtx2
+                 
+                
                 
             } //qpt
             
