@@ -49,13 +49,13 @@ int main(int argc, const char * argv[])
     //read from device
     ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.vtx_xx, CL_TRUE, 0, 3*msh.nv_tot*sizeof(float), ocl.hst.vtx_xx, 0, NULL, NULL);
 
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.U0, CL_TRUE, 0, 1*msh.nv_tot*sizeof(float), ocl.hst.U0, 0, NULL, NULL);
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.U1, CL_TRUE, 0, 1*msh.nv_tot*sizeof(float), ocl.hst.U1, 0, NULL, NULL);
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.F1, CL_TRUE, 0, 1*msh.nv_tot*sizeof(float), ocl.hst.F1, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.U0, CL_TRUE, 0, 4*msh.nv_tot*sizeof(float), ocl.hst.U0, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.U1, CL_TRUE, 0, 4*msh.nv_tot*sizeof(float), ocl.hst.U1, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.F1, CL_TRUE, 0, 4*msh.nv_tot*sizeof(float), ocl.hst.F1, 0, NULL, NULL);
     
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.ii, CL_TRUE, 0, 27*9*msh.nv_tot*sizeof(int),   ocl.hst.J.ii, 0, NULL, NULL);
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.jj, CL_TRUE, 0, 27*9*msh.nv_tot*sizeof(int),   ocl.hst.J.jj, 0, NULL, NULL);
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.vv, CL_TRUE, 0, 27*9*msh.nv_tot*sizeof(float), ocl.hst.J.vv, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.ii, CL_TRUE, 0, 27*16*msh.nv_tot*sizeof(int),   ocl.hst.J.ii, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.jj, CL_TRUE, 0, 27*16*msh.nv_tot*sizeof(int),   ocl.hst.J.jj, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.vv, CL_TRUE, 0, 27*16*msh.nv_tot*sizeof(float), ocl.hst.J.vv, 0, NULL, NULL);
 
     
     //reset

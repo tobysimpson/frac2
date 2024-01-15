@@ -641,6 +641,7 @@ kernel void vtx_init(const  int3    vtx_dim,
 //    U1[idx_c] = vtx1_idx1;
 //    F1[idx_c] = vtx1_idx1;
     
+
     
     //vtx2
     for(int vtx2_idx3=0; vtx2_idx3<27; vtx2_idx3++)
