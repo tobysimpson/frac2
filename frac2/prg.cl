@@ -588,7 +588,7 @@ void eig_drv(float8 dA, float D[3], float3 V[3], float8 S1, float8 S2)
 float eig_dpdu(float D[3], float3 V[3], float3 dU[3], float8 mat_prm)
 {
     //derivatives of principal strains wrt perturbation
-    const float dD[3] = {dot(V[0], mtx_mv(dU,V[0])), dot(V[1], mtx_mv(dU,V[1])), dot(V[2], mtx_mv(dU,V[2]))};
+    float dD[3] = {dot(V[0], mtx_mv(dU,V[0])), dot(V[1], mtx_mv(dU,V[1])), dot(V[2], mtx_mv(dU,V[2]))};
     
     float trE = (D[0]+D[1]+D[2]);
     
@@ -630,7 +630,7 @@ kernel void vtx_init(const  int3    vtx_dim,
     {
         //u
         int idx_u = 4*vtx1_idx1 + dim1;
-        U0[idx_u] = 5e-1f;
+        U0[idx_u] = 6e-1f;
         U1[idx_u] = 5e-1f;
         F1[idx_u] = 0e0f;
     }
@@ -780,7 +780,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
                 }
                 
                 //rhs c
-                F1[4*vtx1_idx1 + 4] += ((c2*p1 + mat_prm.s6*c + mat_prm.s7*(c_prev)*(c_prev<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s4*mat_prm.s5*dot(dc, bas_gg[vtx1_idx2]))*qw;
+                F1[4*vtx1_idx1 + 3] += ((c2*p1 + mat_prm.s6*c + mat_prm.s7*(c_prev)*(c_prev<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s4*mat_prm.s5*dot(dc, bas_gg[vtx1_idx2]))*qw;
                
                 //vtx2
                 for(int vtx2_idx2=0; vtx2_idx2<8; vtx2_idx2++)
@@ -853,8 +853,6 @@ kernel void vtx_assm(const  int3     vtx_dim,
                     
                 } //vtx2
                  
-                
-                
             } //qpt
             
         } //ele1_bnd1
