@@ -42,7 +42,8 @@ int main(int argc, const char * argv[])
     ocl.err = clEnqueueCopyBuffer( ocl.command_queue, ocl.dev.U1, ocl.dev.U0, 0, 0, 4*msh.nv_tot*sizeof(float), 0, NULL, NULL);  //copy to prev
     
     //assemble
-    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_assm, 3, NULL, nv, NULL, 0, NULL, NULL);
+    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_assm, 3, NULL, nv, NULL, 0, NULL, &ocl.event);
+    clWaitForEvents(1, &ocl.event);     //for profiling
     
     //bc2 - displ
     msh.mat_prm.s7 = 1e-1f;                                                                                     //update
@@ -88,6 +89,18 @@ int main(int argc, const char * argv[])
     wrt_raw(ocl.hst.U0, 4*msh.nv_tot, sizeof(float), "U0");
     wrt_raw(ocl.hst.U1, 4*msh.nv_tot, sizeof(float), "U1");
     wrt_raw(ocl.hst.F1, 4*msh.nv_tot, sizeof(float), "F1");
+    
+    
+    //profile
+    cl_ulong time0;
+    cl_ulong time1;
+
+    clGetEventProfilingInfo(ocl.event, CL_PROFILING_COMMAND_START, sizeof(time0), &time0, NULL);
+    clGetEventProfilingInfo(ocl.event, CL_PROFILING_COMMAND_END,   sizeof(time1), &time1, NULL);
+
+    double nanoSeconds = time1-time0;
+    printf("nv, time(ms)\n");
+    printf("%07d, %0.4f;\n", msh.nv_tot, nanoSeconds/1000000.0);
 
     //clean
     ocl_final(&msh, &ocl);
