@@ -28,7 +28,7 @@ struct msh_obj
 void msh_init(struct msh_obj *msh)
 {
     //dim
-    msh->ele_dim.x = 4;
+    msh->ele_dim.x = 2;
     msh->ele_dim.y = msh->ele_dim.x;
     msh->ele_dim.z = msh->ele_dim.x;
     
@@ -57,7 +57,7 @@ void msh_init(struct msh_obj *msh)
     msh->mat_prm.s4 = msh->mat_prm.s2/msh->mat_prm.s3;          //Gc/ls     (pre-calc)
     msh->mat_prm.s5 = msh->mat_prm.s2*msh->mat_prm.s3;          //Gc*ls     (pre-calc)
     msh->mat_prm.s6 = msh->mat_prm.s4*(1e+4f - 1e0f);           //gamma     tau_irr = 1e-2 (kopa2023 eq7) gamma = (gc/ls)*(1/tau^2 - 1)
-    msh->mat_prm.s7 = 0e0f;
+    msh->mat_prm.s7 = 0e0f;                                     //displacement bc
     
     
 //    printf("mat_prm %e %e %e %e\n", msh->mat_prm.s0, msh->mat_prm.s1, msh->mat_prm.z, msh->mat_prm.w);
