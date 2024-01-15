@@ -91,7 +91,6 @@ void wrt_vtk(struct msh_obj *msh, struct ocl_obj *ocl)
      fu
      ===================
      */
-    
 
     fprintf(file1,"VECTORS F1u float\n");
 

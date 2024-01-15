@@ -420,8 +420,8 @@ float8 mec_e(float3 du[3])
 //stress pk2 = lam*tr(e)*I + 2*mu*e
 float8 mec_s(float8 E, float8 mat_prm)
 {
-    float8 S = 2e0f*mat_prm.s3*E;
-    S.s035 += mat_prm.s2*sym_tr(E);
+    float8 S = 2e0f*mat_prm.s1*E;
+    S.s035 += mat_prm.s0*sym_tr(E);
     
     return S;
 }
@@ -429,7 +429,7 @@ float8 mec_s(float8 E, float8 mat_prm)
 //energy phi = 0.5*lam*(tr(E))^2 + mu*tr(E^2)
 float mec_p(float8 E, float8 mat_prm)
 {
-    return 5e-1f*mat_prm.s2*pown(sym_tr(E),2) + mat_prm.s3*sym_tr(sym_mm(E,E));
+    return 5e-1f*mat_prm.s0*pown(sym_tr(E),2) + mat_prm.s1*sym_tr(sym_mm(E,E));
 }
 
 
@@ -442,7 +442,7 @@ float mec_p1(float D[3], float8 mat_prm)
     float d1 = (D[1]>0e0f)*D[1];
     float d2 = (D[2]>0e0f)*D[2];
     
-    return 5e-1f*mat_prm.s2*s*s*(s>0e0f) + mat_prm.s3*(d0*d0 + d1*d1 + d2*d2);
+    return 5e-1f*mat_prm.s0*s*s*(s>0e0f) + mat_prm.s1*(d0*d0 + d1*d1 + d2*d2);
 }
 
 //strain split
@@ -593,7 +593,7 @@ float eig_dpdu(float D[3], float3 V[3], float3 dU[3], float8 mat_prm)
     float trE = (D[0]+D[1]+D[2]);
     
     //test pos trace for first part, inidividual eigs (primary strains) for second part
-    return mat_prm.s2*(trE>0e0f)*(dD[0] + dD[1] + dD[2]) + 2e0f*mat_prm.s3*((D[0]>0e0f)*dD[0] + (D[1]>0e0f)*dD[1] + (D[2]>0e0f)*dD[2]);
+    return mat_prm.s0*(trE>0e0f)*(dD[0] + dD[1] + dD[2]) + 2e0f*mat_prm.s1*((D[0]>0e0f)*dD[0] + (D[1]>0e0f)*dD[1] + (D[2]>0e0f)*dD[2]);
 }
 
 
@@ -780,7 +780,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
                 }
                 
                 //rhs c
-                F1[4*vtx1_idx1 + 3] += ((c2*p1 + mat_prm.s6*c + mat_prm.s7*(c_prev)*(c_prev<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s4*mat_prm.s5*dot(dc, bas_gg[vtx1_idx2]))*qw;
+                F1[4*vtx1_idx1 + 3] += ((c2*p1 + mat_prm.s4*c + mat_prm.s6*(c_prev)*(c_prev<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s5*dot(dc, bas_gg[vtx1_idx2]))*qw;
                
                 //vtx2
                 for(int vtx2_idx2=0; vtx2_idx2<8; vtx2_idx2++)
@@ -835,11 +835,11 @@ kernel void vtx_assm(const  int3     vtx_dim,
                             eig_drv(E2, D, V, dS1, dS2);
                             
                             //stress (lam*tr(E)I + 2*mu*E, pos/neg)
-                            dS1 = 2e0f*mat_prm.s3*dS1;
-                            dS1.s035 += mat_prm.s2*(trE>0e0f)*(trE2);
+                            dS1 = 2e0f*mat_prm.s1*dS1;
+                            dS1.s035 += mat_prm.s0*(trE>0e0f)*(trE2);
                             
-                            dS2 = 2e0f*mat_prm.s3*dS2;
-                            dS2.s035 += mat_prm.s2*(trE<0e0f)*(trE2);
+                            dS2 = 2e0f*mat_prm.s1*dS2;
+                            dS2.s035 += mat_prm.s0*(trE<0e0f)*(trE2);
                             
                             //uu
                             int idx_uu = 27*16*vtx1_idx1 + 16*vtx2_idx3 + 4*dim1 + dim2;
