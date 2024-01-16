@@ -27,11 +27,11 @@ struct coo_hst
 
 struct mem_hst
 {
-    float*  vtx_xx;
+    cl_float4*  vtx_xx;
     
-    float*  U0;     //prev
-    float*  U1;     //sln
-    float*  F1;     //rhs
+    cl_float4*  U0;     //prev
+    cl_float4*  U1;     //sln
+    cl_float4*  F1;     //rhs
     
     struct coo_hst J;
 };
@@ -179,29 +179,29 @@ void ocl_init(struct msh_obj *msh, struct ocl_obj *ocl)
      */
     
     //host
-    ocl->hst.vtx_xx = malloc(3*msh->nv_tot*sizeof(float));
+    ocl->hst.vtx_xx = malloc(msh->nv_tot*sizeof(cl_float4));
     
-    ocl->hst.U0 = malloc(4*msh->nv_tot*sizeof(float));
-    ocl->hst.U1 = malloc(4*msh->nv_tot*sizeof(float));
-    ocl->hst.F1 = malloc(4*msh->nv_tot*sizeof(float));
+    ocl->hst.U0 = malloc(msh->nv_tot*sizeof(cl_float4));
+    ocl->hst.U1 = malloc(msh->nv_tot*sizeof(cl_float4));
+    ocl->hst.F1 = malloc(msh->nv_tot*sizeof(cl_float4));
     
-    ocl->hst.J.ii = malloc(27*16*msh->nv_tot*sizeof(int));
-    ocl->hst.J.jj = malloc(27*16*msh->nv_tot*sizeof(int));
-    ocl->hst.J.vv = malloc(27*16*msh->nv_tot*sizeof(float));
+    ocl->hst.J.ii = malloc(27*msh->nv_tot*sizeof(cl_int16));
+    ocl->hst.J.jj = malloc(27*msh->nv_tot*sizeof(cl_int16));
+    ocl->hst.J.vv = malloc(27*msh->nv_tot*sizeof(cl_float16));
     
 
     //CL_MEM_READ_WRITE/CL_MEM_HOST_READ_ONLY/CL_MEM_HOST_NO_ACCESS
     
     //device
-    ocl->dev.vtx_xx = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 3*msh->nv_tot*sizeof(float), NULL, &ocl->err);
+    ocl->dev.vtx_xx = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, msh->nv_tot*sizeof(cl_float4), NULL, &ocl->err);
     
-    ocl->dev.U0 = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 4*msh->nv_tot*sizeof(float), NULL, &ocl->err);
-    ocl->dev.U1 = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 4*msh->nv_tot*sizeof(float), NULL, &ocl->err);
-    ocl->dev.F1 = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 4*msh->nv_tot*sizeof(float), NULL, &ocl->err);
+    ocl->dev.U0   = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, msh->nv_tot*sizeof(cl_float4), NULL, &ocl->err);
+    ocl->dev.U1   = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, msh->nv_tot*sizeof(cl_float4), NULL, &ocl->err);
+    ocl->dev.F1   = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, msh->nv_tot*sizeof(cl_float4), NULL, &ocl->err);
     
-    ocl->dev.J.ii = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 27*16*msh->nv_tot*sizeof(int),   NULL, &ocl->err);
-    ocl->dev.J.jj = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 27*16*msh->nv_tot*sizeof(int),   NULL, &ocl->err);
-    ocl->dev.J.vv = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 27*16*msh->nv_tot*sizeof(float), NULL, &ocl->err);
+    ocl->dev.J.ii = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 27*msh->nv_tot*sizeof(cl_int16),   NULL, &ocl->err);
+    ocl->dev.J.jj = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 27*msh->nv_tot*sizeof(cl_int16),   NULL, &ocl->err);
+    ocl->dev.J.vv = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 27*msh->nv_tot*sizeof(cl_float16), NULL, &ocl->err);
     
 
     /*

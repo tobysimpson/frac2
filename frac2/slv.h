@@ -47,8 +47,8 @@ int slv_mtx(struct msh_obj *msh, struct ocl_obj *ocl)
     u.count = 4*msh->nv_tot;
     f.count = 4*msh->nv_tot;
     
-    u.data = ocl->hst.U1;
-    f.data = ocl->hst.F1;
+    u.data = (float*)ocl->hst.U1;
+    f.data = (float*)ocl->hst.F1;
 
     /*
      ========================

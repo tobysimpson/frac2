@@ -64,8 +64,7 @@ void wrt_vtk(struct msh_obj *msh, struct ocl_obj *ocl)
 
     for(int i=0; i<msh->nv_tot; i++)
     {
-        int row = 3*i;
-        fprintf(file1, "%e %e %e\n", ocl->hst.vtx_xx[row], ocl->hst.vtx_xx[row+1], ocl->hst.vtx_xx[row+2]);
+        fprintf(file1, "%e %e %e\n", ocl->hst.vtx_xx[i].x, ocl->hst.vtx_xx[i].y, ocl->hst.vtx_xx[i].z);
     }
 
     //point data flag
@@ -81,8 +80,7 @@ void wrt_vtk(struct msh_obj *msh, struct ocl_obj *ocl)
 
     for(int i=0; i<msh->nv_tot; i++)
     {
-        int row = 4*i;
-        fprintf(file1, "%e %e %e\n", ocl->hst.U1[row], ocl->hst.U1[row+1], ocl->hst.U1[row+2]);
+        fprintf(file1, "%e %e %e\n", ocl->hst.U1[i].x, ocl->hst.U1[i].y, ocl->hst.U1[i].z);
     }
 
     
@@ -96,8 +94,7 @@ void wrt_vtk(struct msh_obj *msh, struct ocl_obj *ocl)
 
     for(int i=0; i<msh->nv_tot; i++)
     {
-        int row = 4*i;
-        fprintf(file1, "%e %e %e\n", ocl->hst.F1[row], ocl->hst.F1[row+1], ocl->hst.F1[row+2]);
+        fprintf(file1, "%e %e %e\n", ocl->hst.F1[i].x, ocl->hst.F1[i].y, ocl->hst.F1[i].z);
     }
     
     
@@ -112,8 +109,7 @@ void wrt_vtk(struct msh_obj *msh, struct ocl_obj *ocl)
     
     for(int i=0; i<msh->nv_tot; i++)
     {
-        int row = 4*i+3;
-        fprintf(file1, "%e\n", ocl->hst.U1[row]);
+        fprintf(file1, "%e\n", ocl->hst.U1[i].w);
     }
 
     
@@ -129,8 +125,7 @@ void wrt_vtk(struct msh_obj *msh, struct ocl_obj *ocl)
     
     for(int i=0; i<msh->nv_tot; i++)
     {
-        int row = 4*i+3;
-        fprintf(file1, "%e\n", ocl->hst.F1[row]);
+        fprintf(file1, "%e\n", ocl->hst.F1[i].w);
     }
     
     //clean up

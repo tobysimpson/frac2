@@ -41,7 +41,7 @@ int main(int argc, const char * argv[])
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd1, 3, NULL, nv, NULL, 0, NULL, NULL);
     
     //bnd2 - displacement U
-    msh.mat_prm.s7 = 1e0f;                                                                                      //update
+    msh.mat_prm.s7 = 1e-1f;                                                                                      //update
     ocl.err = clSetKernelArg(ocl.vtx_bnd2,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd2, 3, NULL, nv, NULL, 0, NULL, NULL);
     
@@ -50,7 +50,7 @@ int main(int argc, const char * argv[])
     
     //assemble
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_assm, 3, NULL, nv, NULL, 0, NULL, &ocl.event);
-    clWaitForEvents(1, &ocl.event);     //for profiling
+//    clWaitForEvents(1, &ocl.event);     //for profiling
     
     //bnd3 - displacement F, identity
     ocl.err = clSetKernelArg(ocl.vtx_bnd3,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
@@ -58,15 +58,15 @@ int main(int argc, const char * argv[])
     
 
     //read from device
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.vtx_xx, CL_TRUE, 0, 3*msh.nv_tot*sizeof(float), ocl.hst.vtx_xx, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.vtx_xx, CL_TRUE, 0, msh.nv_tot*sizeof(cl_float4), ocl.hst.vtx_xx, 0, NULL, NULL);
 
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.U0, CL_TRUE, 0, 4*msh.nv_tot*sizeof(float), ocl.hst.U0, 0, NULL, NULL);
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.U1, CL_TRUE, 0, 4*msh.nv_tot*sizeof(float), ocl.hst.U1, 0, NULL, NULL);
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.F1, CL_TRUE, 0, 4*msh.nv_tot*sizeof(float), ocl.hst.F1, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.U0, CL_TRUE, 0, msh.nv_tot*sizeof(cl_float4), ocl.hst.U0, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.U1, CL_TRUE, 0, msh.nv_tot*sizeof(cl_float4), ocl.hst.U1, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.F1, CL_TRUE, 0, msh.nv_tot*sizeof(cl_float4), ocl.hst.F1, 0, NULL, NULL);
     
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.ii, CL_TRUE, 0, 27*16*msh.nv_tot*sizeof(int),   ocl.hst.J.ii, 0, NULL, NULL);
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.jj, CL_TRUE, 0, 27*16*msh.nv_tot*sizeof(int),   ocl.hst.J.jj, 0, NULL, NULL);
-    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.vv, CL_TRUE, 0, 27*16*msh.nv_tot*sizeof(float), ocl.hst.J.vv, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.ii, CL_TRUE, 0, 27*msh.nv_tot*sizeof(cl_int16),   ocl.hst.J.ii, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.jj, CL_TRUE, 0, 27*msh.nv_tot*sizeof(cl_int16),   ocl.hst.J.jj, 0, NULL, NULL);
+    ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.J.vv, CL_TRUE, 0, 27*msh.nv_tot*sizeof(cl_float16), ocl.hst.J.vv, 0, NULL, NULL);
 
     
     //reset
@@ -88,25 +88,25 @@ int main(int argc, const char * argv[])
     wrt_vtk(&msh, &ocl);
     
     //write for matlab
-    wrt_raw(ocl.hst.J.ii, 27*16*msh.nv_tot, sizeof(int),   "J_ii");
-    wrt_raw(ocl.hst.J.jj, 27*16*msh.nv_tot, sizeof(int),   "J_jj");
-    wrt_raw(ocl.hst.J.vv, 27*16*msh.nv_tot, sizeof(float), "J_vv");
+    wrt_raw(ocl.hst.J.ii, 27*msh.nv_tot, sizeof(cl_int16),   "J_ii");
+    wrt_raw(ocl.hst.J.jj, 27*msh.nv_tot, sizeof(cl_int16),   "J_jj");
+    wrt_raw(ocl.hst.J.vv, 27*msh.nv_tot, sizeof(cl_float16), "J_vv");
     
-    wrt_raw(ocl.hst.U0, 4*msh.nv_tot, sizeof(float), "U0");
-    wrt_raw(ocl.hst.U1, 4*msh.nv_tot, sizeof(float), "U1");
-    wrt_raw(ocl.hst.F1, 4*msh.nv_tot, sizeof(float), "F1");
+    wrt_raw(ocl.hst.U0, msh.nv_tot, sizeof(cl_float4), "U0");
+    wrt_raw(ocl.hst.U1, msh.nv_tot, sizeof(cl_float4), "U1");
+    wrt_raw(ocl.hst.F1, msh.nv_tot, sizeof(cl_float4), "F1");
     
     
-    //profile
-    cl_ulong time0;
-    cl_ulong time1;
-
-    clGetEventProfilingInfo(ocl.event, CL_PROFILING_COMMAND_START, sizeof(time0), &time0, NULL);
-    clGetEventProfilingInfo(ocl.event, CL_PROFILING_COMMAND_END,   sizeof(time1), &time1, NULL);
-
-    double nanoSeconds = time1-time0;
-    printf("nv, time(ms)\n");
-    printf("%07d, %0.4f;\n", msh.nv_tot, nanoSeconds/1000000.0);
+//    //profile
+//    cl_ulong time0;
+//    cl_ulong time1;
+//
+//    clGetEventProfilingInfo(ocl.event, CL_PROFILING_COMMAND_START, sizeof(time0), &time0, NULL);
+//    clGetEventProfilingInfo(ocl.event, CL_PROFILING_COMMAND_END,   sizeof(time1), &time1, NULL);
+//
+//    double nanoSeconds = time1-time0;
+//    printf("nv, time(ms)\n");
+//    printf("%07d, %0.4f;\n", msh.nv_tot, nanoSeconds/1000000.0);
 
     //clean
     ocl_final(&msh, &ocl);
