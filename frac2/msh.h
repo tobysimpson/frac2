@@ -28,7 +28,7 @@ struct msh_obj
 void msh_init(struct msh_obj *msh)
 {
     //dim
-    msh->ele_dim.x = 4;
+    msh->ele_dim.x = 2;
     msh->ele_dim.y = msh->ele_dim.x;
     msh->ele_dim.z = msh->ele_dim.x;
     

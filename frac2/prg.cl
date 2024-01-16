@@ -641,7 +641,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
     //volume
     float vlm = dx.x*dx.y*dx.z;
     
-    printf("vtx1 %3d %v3d %e\n", vtx1_idx1, vtx1_pos1, vlm);
+//    printf("vtx1 %3d %v3d %e\n", vtx1_idx1, vtx1_pos1, vlm);
     
     //read 3x3x3
     float4  uu30[27]; //prev
@@ -775,12 +775,12 @@ kernel void vtx_assm(const  int3     vtx_dim,
                     int3 vtx2_pos3 = ele1_pos2 + off2[vtx2_idx2];
                     int  vtx2_idx3 = fn_idx3(vtx2_pos3);
                     
-                    //idx, local ptr
+                    //local ptr
                     int idx1 = 27*vtx1_idx1 + vtx2_idx3;
                     global float* vv = (global float*)&J_vv[idx1];
                     
                     //cc write
-                    vv[15] += qw; //((2e0f*p1 + mat_prm.s6 + mat_prm.s7*(dc<0e0f))*bas_ee[vtx1_idx2]*bas_ee[vtx2_idx2] + mat_prm.s4*mat_prm.s5*dot(bas_gg[vtx1_idx2], bas_gg[vtx2_idx2]))*qw;
+                    vv[15] += ((2e0f*p1 + mat_prm.s4 + mat_prm.s6*(dc<0e0f))*bas_ee[vtx1_idx2]*bas_ee[vtx2_idx2] + mat_prm.s5*dot(bas_gg[vtx1_idx2], bas_gg[vtx2_idx2]))*qw;
                     
                     //dim1
                     for(int dim1=0; dim1<3; dim1++)
