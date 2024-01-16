@@ -42,9 +42,7 @@ float8  mec_e(float3 g[3]);
 float8  mec_s(float8 E, float8 mat_prm);
 float   mec_p(float8 E, float8 mat_prm);
 float   mec_p1(float D[3], float8 mat_prm);
-//void    mec_e12(float D[3], float3 V[3], float8 E1, float8 E2);
-//void    mec_s12(float D[3], float3 V[3], float8 mat_prm, float8 S1, float8 S2);
-float8  mec_test(float D[3], float3 V[3]);
+void    mec_s12(float D[3], float3 V[3], float8 mat_prm, float8 *S1, float8 *S2);
 
 void    mem_gr3(global float4 *buf, float4 uu3[27], int3 pos, int3 dim);
 void    mem_lr2(float4 uu3[27], float4 uu2[8], int3 pos);
@@ -391,7 +389,6 @@ float mec_p(float8 E, float8 mat_prm)
     return 5e-1f*mat_prm.s0*pown(sym_tr(E),2) + mat_prm.s1*sym_tr(sym_mm(E,E));
 }
 
-
 //energy pos (miehe2010)
 float mec_p1(float D[3], float8 mat_prm)
 {
@@ -404,33 +401,21 @@ float mec_p1(float D[3], float8 mat_prm)
     return 5e-1f*mat_prm.s0*s*s*(s>0e0f) + mat_prm.s1*(d0*d0 + d1*d1 + d2*d2);
 }
 
-////strain split
-//void mec_e12(float D[3], float3 V[3], float8 E1, float8 E2)
-//{
-//    float8 vv0 = sym_vvT(V[0]);
-//    float8 vv1 = sym_vvT(V[1]);
-//    float8 vv2 = sym_vvT(V[2]);
-//    
-//    //strain
-//    E1 = (D[0]>0e0f)*D[0]*vv0 + (D[1]>0e0f)*D[1]*vv1 + (D[2]>0e0f)*D[2]*vv2;
-//    E2 = (D[0]<0e0f)*D[0]*vv0 + (D[1]<0e0f)*D[1]*vv1 + (D[2]<0e0f)*D[2]*vv2;
-//    
-//    return;
-//}
-
-//stress split Miehe2010
-float8  mec_test(float D[3], float3 V[3])
+void mec_s12(float D[3], float3 V[3], float8 mat_prm, float8 *S1, float8 *S2)
 {
-    float8 S1 = 0e0f;
+    float trE = D[0] + D[1] + D[2];
     
+    //loop eigs
     for(int i=0; i<3; i++)
     {
-        S1 += sym_vvT(V[i]);
+        float8 vvT = sym_vvT(V[i]);
+        
+        *S1 += mat_prm.s0*trE*(trE>0e0f) + 2e0f*mat_prm.s1*D[i]*(D[i]>0e0f)*vvT;
+        *S2 += mat_prm.s0*trE*(trE<0e0f) + 2e0f*mat_prm.s1*D[i]*(D[i]<0e0f)*vvT;
     }
     
-    return S1;
+    return;
 }
-
 
 /*
  ===================================
@@ -732,16 +717,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
                 //split stress
                 float8 S1 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
                 float8 S2 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
-                
-        
-                //doesnt like function do in place
-                for(int i=0; i<3; i++)
-                {
-                    float8 vvT = sym_vvT(V[i]);
-                    
-                    S1 += mat_prm.s0*trE*(trE>0e0f) + 2e0f*mat_prm.s1*D[i]*(D[i]>0e0f)*vvT;
-                    S2 += mat_prm.s0*trE*(trE<0e0f) + 2e0f*mat_prm.s1*D[i]*(D[i]<0e0f)*vvT;
-                }
+                mec_s12(D, V, mat_prm, &S1, &S2);
                 
 //                printf("%v8f\n",S1);
 //                printf("%v8f\n",S2);
@@ -911,6 +887,8 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
     int b1 = (vtx1_pos1.z == 0);                    //base
     int b2 = (vtx1_pos1.z == (vtx_dim.z - 1));      //top
     
+    
+    
     //base
     if(b1)
     {
@@ -941,7 +919,7 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
             
 
             //dim1
-            for(int dim1=0; dim1<4; dim1++)
+            for(int dim1=0; dim1<3; dim1++)
             {
                 //dim2
                 for(int dim2=0; dim2<4; dim2++)
