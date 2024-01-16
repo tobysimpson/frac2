@@ -42,8 +42,9 @@ float8  mec_e(float3 g[3]);
 float8  mec_s(float8 E, float8 mat_prm);
 float   mec_p(float8 E, float8 mat_prm);
 float   mec_p1(float D[3], float8 mat_prm);
-void    mec_e12(float D[3], float3 V[3], float8 E1, float8 E2);
-void    mec_s12(float D[3], float3 V[3], float8 mat_prm, float8 S1, float8 S2);
+//void    mec_e12(float D[3], float3 V[3], float8 E1, float8 E2);
+//void    mec_s12(float D[3], float3 V[3], float8 mat_prm, float8 S1, float8 S2);
+float8  mec_test(float D[3], float3 V[3]);
 
 void    mem_gr3(global float4 *buf, float4 uu3[27], int3 pos, int3 dim);
 void    mem_lr2(float4 uu3[27], float4 uu2[8], int3 pos);
@@ -403,31 +404,31 @@ float mec_p1(float D[3], float8 mat_prm)
     return 5e-1f*mat_prm.s0*s*s*(s>0e0f) + mat_prm.s1*(d0*d0 + d1*d1 + d2*d2);
 }
 
-//strain split
-void mec_e12(float D[3], float3 V[3], float8 E1, float8 E2)
-{
-    float8 vv0 = sym_vvT(V[0]);
-    float8 vv1 = sym_vvT(V[1]);
-    float8 vv2 = sym_vvT(V[2]);
-    
-    //strain
-    E1 = (D[0]>0e0f)*D[0]*vv0 + (D[1]>0e0f)*D[1]*vv1 + (D[2]>0e0f)*D[2]*vv2;
-    E2 = (D[0]<0e0f)*D[0]*vv0 + (D[1]<0e0f)*D[1]*vv1 + (D[2]<0e0f)*D[2]*vv2;
-    
-    return;
-}
+////strain split
+//void mec_e12(float D[3], float3 V[3], float8 E1, float8 E2)
+//{
+//    float8 vv0 = sym_vvT(V[0]);
+//    float8 vv1 = sym_vvT(V[1]);
+//    float8 vv2 = sym_vvT(V[2]);
+//    
+//    //strain
+//    E1 = (D[0]>0e0f)*D[0]*vv0 + (D[1]>0e0f)*D[1]*vv1 + (D[2]>0e0f)*D[2]*vv2;
+//    E2 = (D[0]<0e0f)*D[0]*vv0 + (D[1]<0e0f)*D[1]*vv1 + (D[2]<0e0f)*D[2]*vv2;
+//    
+//    return;
+//}
 
-//stress split
-void mec_s12(float D[3], float3 V[3], float8 mat_prm, float8 S1, float8 S2)
+//stress split Miehe2010
+float8  mec_test(float D[3], float3 V[3])
 {
-    //strain
-    mec_e12(D, V, S1, S2);
+    float8 S1 = 0e0f;
     
-    //stress
-    S1 = mec_s(S1, mat_prm);
-    S2 = mec_s(S2, mat_prm);
+    for(int i=0; i<3; i++)
+    {
+        S1 += sym_vvT(V[i]);
+    }
     
-    return;
+    return S1;
 }
 
 
@@ -580,7 +581,7 @@ kernel void vtx_init(const  int3    vtx_dim,
     //coord
     vtx_xx[vtx1_idx1].xyz = x0 + dx*convert_float3(vtx1_pos1);
 
-    printf("xx %2d %v3f\n", vtx1_idx1, vtx_xx[vtx1_idx1]);
+//    printf("xx %2d %v3f\n", vtx1_idx1, vtx_xx[vtx1_idx1]);
     
     //rhs
     U0[vtx1_idx1] = 0e0f;
@@ -711,15 +712,19 @@ kernel void vtx_assm(const  int3     vtx_dim,
                 float dc = c1 - c0;              //for heaviside
                 float cc[2] = {pown(1e0f - c1, 2), 2e0f*(c1 - 1e0f)};  //pre-calc
             
-
                 //strain
                 float8 E = mec_e(du);
                 float trE = sym_tr(E);
+                
+//                printf("%v8e\n", E); //ok
                 
                 //decompose E
                 float  D[3];
                 float3 V[3];
                 eig_dcm(E, D, V);
+                
+//                printf("%e %e %e\n", D[0],D[1],D[2]); //ok
+//                printf("%v3e %v3e %v3e\n", V[0],V[1],V[2]); //ok
                 
                 //energy (pos)
                 float p1 = mec_p1(D, mat_prm);
@@ -727,9 +732,19 @@ kernel void vtx_assm(const  int3     vtx_dim,
                 //split stress
                 float8 S1 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
                 float8 S2 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
-                mec_s12(D, V, mat_prm, S1, S2);
                 
-//                printf("%v8e\n", S2);
+        
+                //doesnt like function do in place
+                for(int i=0; i<3; i++)
+                {
+                    float8 vvT = sym_vvT(V[i]);
+                    
+                    S1 += mat_prm.s0*trE*(trE>0e0f) + 2e0f*mat_prm.s1*D[i]*(D[i]>0e0f)*vvT;
+                    S2 += mat_prm.s0*trE*(trE<0e0f) + 2e0f*mat_prm.s1*D[i]*(D[i]<0e0f)*vvT;
+                }
+                
+//                printf("%v8f\n",S1);
+//                printf("%v8f\n",S2);
 
                 //local ptr
                 global float* ff = (global float*)&F1[vtx1_idx1];
@@ -744,12 +759,14 @@ kernel void vtx_assm(const  int3     vtx_dim,
                     //strain
                     float8 E1 = mec_e(du1);
                     
+//                    printf("%+v8f\n", E1); //ok
+                    
                     //write
-                    ff[dim1] += sym_tip(c1*S1 + S2, E1)*qw;
+                    ff[dim1] += sym_tip(cc[0]*S1 + S2, E1)*qw;
                 }
                 
                 //rhs c
-                F1[4*vtx1_idx1 + 3] += qw;// ((c2*p1 + mat_prm.s4*c + mat_prm.s6*(c_prev)*(c_prev<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s5*dot(dc, bas_gg[vtx1_idx2]))*qw;
+                ff[3] += ((cc[1]*p1 + mat_prm.s4*c1 + mat_prm.s6*(dc)*(dc<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s5*dot(du[3], bas_gg[vtx1_idx2]))*qw;
                
                 //vtx2
                 for(int vtx2_idx2=0; vtx2_idx2<8; vtx2_idx2++)
@@ -758,11 +775,12 @@ kernel void vtx_assm(const  int3     vtx_dim,
                     int3 vtx2_pos3 = ele1_pos2 + off2[vtx2_idx2];
                     int  vtx2_idx3 = fn_idx3(vtx2_pos3);
                     
-                    //idx
-                    int idx_cc = 27*16*vtx1_idx1 + 16*vtx2_idx3 + 15;
+                    //idx, local ptr
+                    int idx1 = 27*vtx1_idx1 + vtx2_idx3;
+                    global float* vv = (global float*)&J_vv[idx1];
                     
                     //cc write
-//                    J_vv[idx_cc] += qw; //((2e0f*p1 + mat_prm.s6 + mat_prm.s7*(c_prev<0e0f))*bas_ee[vtx1_idx2]*bas_ee[vtx2_idx2] + mat_prm.s4*mat_prm.s5*dot(bas_gg[vtx1_idx2], bas_gg[vtx2_idx2]))*qw;
+                    vv[15] += qw; //((2e0f*p1 + mat_prm.s6 + mat_prm.s7*(dc<0e0f))*bas_ee[vtx1_idx2]*bas_ee[vtx2_idx2] + mat_prm.s4*mat_prm.s5*dot(bas_gg[vtx1_idx2], bas_gg[vtx2_idx2]))*qw;
                     
                     //dim1
                     for(int dim1=0; dim1<3; dim1++)
@@ -775,15 +793,15 @@ kernel void vtx_assm(const  int3     vtx_dim,
                         float8 E1 = mec_e(du1);
                         
                         //idx
-                        int idx_uc = 27*16*vtx1_idx1 + 16*vtx2_idx3 + 4*dim1 + 3;
-                        int idx_cu = 27*16*vtx1_idx1 + 16*vtx2_idx3 + 12 + dim1;
+                        int idx3 = 4*dim1 + 3;
+                        int idx4 = 12 + dim1;
                         
-                        //symmetric
-                        float uccu = qw; //c2*eig_dpdu(D, V, du1, mat_prm)*bas_ee[vtx1_idx2]*qw;
+                        //coupling uc/cu
+                        float cpl = cc[1]*eig_dpdu(D, V, du1, mat_prm)*bas_ee[vtx1_idx2]*qw;
                         
                         //uc write
-//                        J_vv[idx_uc] += uccu;
-//                        J_vv[idx_cu] += uccu;
+                        vv[idx3] += cpl;
+                        vv[idx4] += cpl;
                         
                         //dim2
                         for(int dim2=0; dim2<3; dim2++)
@@ -810,11 +828,9 @@ kernel void vtx_assm(const  int3     vtx_dim,
                             dS2 = 2e0f*mat_prm.s1*dS2;
                             dS2.s035 += mat_prm.s0*(trE<0e0f)*(trE2);
                             
-                            //uu
-                            int idx_uu = 27*16*vtx1_idx1 + 16*vtx2_idx3 + 4*dim1 + dim2;
-                            
-                            //write
-//                            J_vv[idx_uu] += qw; //(c1*sym_tip(dS1, E1) + sym_tip(dS2, E1))*qw;
+                            //write uu
+                            int idx2 = 4*dim1 + dim2;
+                            vv[idx2] += (cc[0]*sym_tip(dS1, E1) + sym_tip(dS2, E1))*qw;
                             
                         } //dim2
                         

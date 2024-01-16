@@ -52,9 +52,9 @@ int main(int argc, const char * argv[])
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_assm, 3, NULL, nv, NULL, 0, NULL, &ocl.event);
 //    clWaitForEvents(1, &ocl.event);     //for profiling
     
-    //bnd3 - displacement F, identity
-    ocl.err = clSetKernelArg(ocl.vtx_bnd3,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
-    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd3, 3, NULL, nv, NULL, 0, NULL, NULL);
+//    //bnd3 - displacement F, identity
+//    ocl.err = clSetKernelArg(ocl.vtx_bnd3,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
+//    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd3, 3, NULL, nv, NULL, 0, NULL, NULL);
     
 
     //read from device
