@@ -715,19 +715,19 @@ kernel void vtx_assm(const  int3     vtx_dim,
             mem_lr2f3(uu3, uu2, ele1_pos2);
             
             //qpt1 (change limit with scheme 1,8,27)
-            for(int qpt1=0; qpt1<8; qpt1++)
+            for(int qpt1=0; qpt1<27; qpt1++)
             {
 //                //1pt
 //                float3 qp = (float3){qp1,qp1,qp1};
 //                float  qw = qw1*qw1*qw1*vlm;
                 
-                //2pt
-                float3 qp = (float3){qp2[off2[qpt1].x], qp2[off2[qpt1].y], qp2[off2[qpt1].z]};
-                float  qw = qw2[off2[qpt1].x]*qw2[off2[qpt1].y]*qw2[off2[qpt1].z]*vlm;
+//                //2pt
+//                float3 qp = (float3){qp2[off2[qpt1].x], qp2[off2[qpt1].y], qp2[off2[qpt1].z]};
+//                float  qw = qw2[off2[qpt1].x]*qw2[off2[qpt1].y]*qw2[off2[qpt1].z]*vlm;
                 
-//                //3pt
-//                float3 qp = (float3){qp3[off3[qpt1].x], qp3[off3[qpt1].y], qp3[off3[qpt1].z]};
-//                float  qw = qw3[off3[qpt1].x]*qw3[off3[qpt1].y]*qw3[off3[qpt1].z]*vlm;
+                //3pt
+                float3 qp = (float3){qp3[off3[qpt1].x], qp3[off3[qpt1].y], qp3[off3[qpt1].z]};
+                float  qw = qw3[off3[qpt1].x]*qw3[off3[qpt1].y]*qw3[off3[qpt1].z]*vlm;
                 
                 //basis
                 float  bas_ee[8];
@@ -886,13 +886,45 @@ kernel void vtx_bnd1(const  int3   vtx_dim,
     return;
 }
 
+//displacement
+kernel void vtx_bnd2(const  int3   vtx_dim,
+                     const  float8 mat_prm,
+                     global float *U1)
+{
+    int3 vtx1_pos1  = {get_global_id(0), get_global_id(1), get_global_id(2)};
+    int  vtx1_idx1 = fn_idx1(vtx1_pos1, vtx_dim);
+    
+    //bools
+    int b1 = (vtx1_pos1.z == 0);                    //base
+    int b2 = (vtx1_pos1.z == (vtx_dim.z - 1));      //top
+    
+    //base
+    if(b1)
+    {
+        //rhs
+        U1[4*vtx1_idx1+0] = 0e0f;
+        U1[4*vtx1_idx1+1] = 0e0f;
+        U1[4*vtx1_idx1+2] = 0e0f;
+    }
+    
+    //top
+    if(b2)
+    {
+        //rhs
+        U1[4*vtx1_idx1+0] = 0e0f;
+        U1[4*vtx1_idx1+1] = 0e0f;
+        U1[4*vtx1_idx1+2] = mat_prm.s7;
+    }
+
+    return;
+}
+
 
 //dirichlet
-kernel void vtx_bnd2(const  int3   vtx_dim,
-                     global float *U1,
-                     global float *F1,
-                     global float *J_vv,
-                     const  float8 mat_prm)
+kernel void vtx_bnd3(const  int3    vtx_dim,
+                     const  float8  mat_prm,
+                     global float  *F1,
+                     global float  *J_vv)
 {
     int3 vtx1_pos1  = {get_global_id(0), get_global_id(1), get_global_id(2)};
     int vtx1_idx1 = fn_idx1(vtx1_pos1, vtx_dim);
@@ -906,11 +938,6 @@ kernel void vtx_bnd2(const  int3   vtx_dim,
     {
 //        printf("vtx1_pos1 %v3d\n", vtx1_pos1);
         
-        //sln
-        U1[4*vtx1_idx1+0] = 0e0f;
-        U1[4*vtx1_idx1+1] = 0e0f;
-        U1[4*vtx1_idx1+2] = 0e0f;
-        
         //rhs
         F1[4*vtx1_idx1+0] = 0e0f;
         F1[4*vtx1_idx1+1] = 0e0f;
@@ -921,11 +948,6 @@ kernel void vtx_bnd2(const  int3   vtx_dim,
     if(b2)
     {
 //        printf("vtx1_pos1 %v3d\n", vtx1_pos1);
-        
-        //sln
-        U1[4*vtx1_idx1+0] = 0e0f;
-        U1[4*vtx1_idx1+1] = 0e0f;
-        U1[4*vtx1_idx1+2] = mat_prm.s7;
         
         //rhs
         F1[4*vtx1_idx1+0] = 0e0f;
@@ -959,7 +981,8 @@ kernel void vtx_bnd2(const  int3   vtx_dim,
             } //dim1
             
         } //vtx2
-    }
+        
+    } //if
     
     return;
 }
