@@ -737,7 +737,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
 //                    printf("%+v8f\n", E1); //ok
                     
                     //write
-//                    ff[dim1] += sym_tip(cc[0]*S1 + S2, E1)*qw;
+                    ff[dim1] += sym_tip(cc[0]*S1 + S2, E1)*qw;
                 }
                 
                 //rhs c
@@ -796,14 +796,14 @@ kernel void vtx_assm(const  int3     vtx_dim,
                             //split (strain)
                             eig_drv(E2, D, V, &dS1, &dS2);
                             
-                            printf("%+v8f\n", dS2);
+//                            printf("%+v8f\n", dS1);
                             
                             //stress (lam*tr(E)I + 2*mu*E, pos/neg)
                             dS1 = 2e0f*mat_prm.s1*dS1;
-                            dS1.s035 += mat_prm.s0*(trE>0e0f)*(trE2);
+                            dS1.s035 += mat_prm.s0*(trE2>0e0f)*(trE2);      //if(trace of basis or solution?)
                             
                             dS2 = 2e0f*mat_prm.s1*dS2;
-                            dS2.s035 += mat_prm.s0*(trE<0e0f)*(trE2);
+                            dS2.s035 += mat_prm.s0*(trE2<0e0f)*(trE2);
                             
                             //write uu
                             int idx2 = 4*dim1 + dim2;
@@ -889,19 +889,20 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
     int b1 = (vtx1_pos1.z == 0);                    //base
     int b2 = (vtx1_pos1.z == (vtx_dim.z - 1));      //top
     
-//    //base
-//    if(b1)
-//    {
-//        //rhs
-//        F1[vtx1_idx1].xyz = (float3){0e0f,0e0f,0e0f};
-//    }
-//    
-//    //top
-//    if(b2)
-//    {
-//        //rhs
+    //base
+    if(b1)
+    {
+        //rhs to soln
+        F1[vtx1_idx1].xyz = (float3){0e0f,0e0f,0e0f};
+    }
+    
+    //top
+    if(b2)
+    {
+        //rhs to soln
 //        F1[vtx1_idx1].xyz = (float3){0e0f,0e0f,mat_prm.s7};
-//    }
+        F1[vtx1_idx1].xyz = mat_prm.s7;
+    }
 
     //I
     if((b1+b2)>0) //or

@@ -41,7 +41,7 @@ int main(int argc, const char * argv[])
 //    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd1, 3, NULL, nv, NULL, 0, NULL, NULL);
     
     //bnd2 - displacement U
-    msh.mat_prm.s7 = 1e0f;                                                                                      //update
+    msh.mat_prm.s7 = 1e-1f;                                                                                      //update
     ocl.err = clSetKernelArg(ocl.vtx_bnd2,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd2, 3, NULL, nv, NULL, 0, NULL, NULL);
     
@@ -75,7 +75,7 @@ int main(int argc, const char * argv[])
 //    memset(ocl.hst.U1u, 0, 3*msh.nv_tot*sizeof(float));
 //    memset(ocl.hst.U1c, 0, 1*msh.nv_tot*sizeof(float));
     
-//    //solve
+    //solve
 //    slv_mtx(&msh, &ocl);
     
     //store prior
