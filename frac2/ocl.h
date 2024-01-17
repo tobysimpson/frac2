@@ -72,6 +72,7 @@ struct ocl_obj
     cl_kernel           vtx_bnd1;
     cl_kernel           vtx_bnd2;
     cl_kernel           vtx_bnd3;
+    cl_kernel           vtx_bnd4;
 };
 
 
@@ -171,6 +172,7 @@ void ocl_init(struct msh_obj *msh, struct ocl_obj *ocl)
     ocl->vtx_bnd1 = clCreateKernel(ocl->program, "vtx_bnd1", &ocl->err);
     ocl->vtx_bnd2 = clCreateKernel(ocl->program, "vtx_bnd2", &ocl->err);
     ocl->vtx_bnd3 = clCreateKernel(ocl->program, "vtx_bnd3", &ocl->err);
+    ocl->vtx_bnd4 = clCreateKernel(ocl->program, "vtx_bnd4", &ocl->err);
     
     /*
      =============================
@@ -241,6 +243,9 @@ void ocl_init(struct msh_obj *msh, struct ocl_obj *ocl)
     ocl->err = clSetKernelArg(ocl->vtx_bnd3,  2, sizeof(cl_mem),    (void*)&ocl->dev.F1);
     ocl->err = clSetKernelArg(ocl->vtx_bnd3,  3, sizeof(cl_mem),    (void*)&ocl->dev.J.vv);
     
+    ocl->err = clSetKernelArg(ocl->vtx_bnd4,  0, sizeof(cl_int3),   (void*)&msh->vtx_dim);
+    ocl->err = clSetKernelArg(ocl->vtx_bnd4,  1, sizeof(cl_mem),    (void*)&ocl->dev.F1);
+    ocl->err = clSetKernelArg(ocl->vtx_bnd4,  2, sizeof(cl_mem),    (void*)&ocl->dev.J.vv);
 }
 
 
@@ -256,6 +261,7 @@ void ocl_final(struct msh_obj *msh, struct ocl_obj *ocl)
     ocl->err = clReleaseKernel(ocl->vtx_bnd1);
     ocl->err = clReleaseKernel(ocl->vtx_bnd2);
     ocl->err = clReleaseKernel(ocl->vtx_bnd3);
+    ocl->err = clReleaseKernel(ocl->vtx_bnd4);
     
     //device
     ocl->err = clReleaseMemObject(ocl->dev.vtx_xx);

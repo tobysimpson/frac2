@@ -38,10 +38,10 @@ int main(int argc, const char * argv[])
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_init, 3, NULL, nv, NULL, 0, NULL, NULL);
     
     //bnd1, notch
-    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd1, 3, NULL, nv, NULL, 0, NULL, NULL);
+//    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd1, 3, NULL, nv, NULL, 0, NULL, NULL);
     
     //bnd2 - displacement U
-    msh.mat_prm.s7 = 1e-1f;                                                                                      //update
+    msh.mat_prm.s7 = 1e0f;                                                                                      //update
     ocl.err = clSetKernelArg(ocl.vtx_bnd2,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd2, 3, NULL, nv, NULL, 0, NULL, NULL);
     
@@ -50,11 +50,14 @@ int main(int argc, const char * argv[])
     
     //assemble
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_assm, 3, NULL, nv, NULL, 0, NULL, &ocl.event);
-    clWaitForEvents(1, &ocl.event);     //for profiling
+    clWaitForEvents(1, &ocl.event);                                                                             //for profiling
     
     //bnd3 - displacement F, identity
     ocl.err = clSetKernelArg(ocl.vtx_bnd3,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd3, 3, NULL, nv, NULL, 0, NULL, NULL);
+    
+    //bnd4 crack I
+    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd4, 3, NULL, nv, NULL, 0, NULL, NULL);
 
     //read from device
     ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.vtx_xx, CL_TRUE, 0, msh.nv_tot*sizeof(cl_float4), ocl.hst.vtx_xx, 0, NULL, NULL);
