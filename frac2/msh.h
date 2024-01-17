@@ -43,7 +43,8 @@ void msh_init(struct msh_obj *msh)
     msh->dx = (cl_float3){(msh->x1.x - msh->x0.x)/(float)msh->ele_dim.x, (msh->x1.y - msh->x0.y)/(float)msh->ele_dim.y, (msh->x1.z - msh->x0.z)/(float)msh->ele_dim.z};
     
     printf("x0 %+e %+e %+e\n", msh->x0.x, msh->x0.y, msh->x0.z);
-    printf("x1 %+e %+e %+e\n", msh->x1.x, msh->x1.y, msh->x1.z);
+//    printf("x1 %+e %+e %+e\n", msh->x1.x, msh->x1.y, msh->x1.z);
+    msh->x1 = (cl_float3){msh->ele_dim.x, msh->ele_dim.y, msh->ele_dim.z};
     printf("dx %+e %+e %+e\n", msh->dx.x, msh->dx.y, msh->dx.z);
     
     //material params

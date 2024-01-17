@@ -658,19 +658,19 @@ kernel void vtx_assm(const  int3     vtx_dim,
             mem_lr2(uu31, uu21, ele1_pos2);
             
             //qpt1 (change limit with scheme 1,8,27)
-            for(int qpt1=0; qpt1<1; qpt1++)
+            for(int qpt1=0; qpt1<27; qpt1++)
             {
-                //1pt
-                float3 qp = (float3){qp1,qp1,qp1};
-                float  qw = qw1*qw1*qw1*vlm;
+//                //1pt
+//                float3 qp = (float3){qp1,qp1,qp1};
+//                float  qw = qw1*qw1*qw1*vlm;
                 
 //                //2pt
 //                float3 qp = (float3){qp2[off2[qpt1].x], qp2[off2[qpt1].y], qp2[off2[qpt1].z]};
 //                float  qw = qw2[off2[qpt1].x]*qw2[off2[qpt1].y]*qw2[off2[qpt1].z]*vlm;
                 
-//                //3pt
-//                float3 qp = (float3){qp3[off3[qpt1].x], qp3[off3[qpt1].y], qp3[off3[qpt1].z]};
-//                float  qw = qw3[off3[qpt1].x]*qw3[off3[qpt1].y]*qw3[off3[qpt1].z]*vlm;
+                //3pt
+                float3 qp = (float3){qp3[off3[qpt1].x], qp3[off3[qpt1].y], qp3[off3[qpt1].z]};
+                float  qw = qw3[off3[qpt1].x]*qw3[off3[qpt1].y]*qw3[off3[qpt1].z]*vlm;
                 
                 //basis
                 float  bas_ee[8];
@@ -867,7 +867,8 @@ kernel void vtx_bnd2(const  int3   vtx_dim,
     if(b2)
     {
         //soln
-        U1[vtx1_idx1].xyz = (float3){0e0f,0e0f,mat_prm.s7};
+//        U1[vtx1_idx1].xyz = (float3){0e0f,0e0f,mat_prm.s7};
+        U1[vtx1_idx1].xyz = mat_prm.s7;
     }
 
     return;
@@ -887,8 +888,6 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
     int b1 = (vtx1_pos1.z == 0);                    //base
     int b2 = (vtx1_pos1.z == (vtx_dim.z - 1));      //top
     
-    
-    
     //base
     if(b1)
     {
@@ -904,7 +903,7 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
     }
 
     //I
-    if(b1+b2) //or
+    if((b1+b2)>0) //or
     {
         //vtx2
         for(int vtx2_idx3=0; vtx2_idx3<27; vtx2_idx3++)
@@ -919,7 +918,7 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
             
 
             //dim1
-            for(int dim1=0; dim1<3; dim1++)
+            for(int dim1=0; dim1<4; dim1++)
             {
                 //dim2
                 for(int dim2=0; dim2<4; dim2++)
