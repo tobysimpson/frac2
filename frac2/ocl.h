@@ -198,7 +198,7 @@ void ocl_init(struct msh_obj *msh, struct ocl_obj *ocl)
     ocl->dev.vtx_xx = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, msh->nv_tot*sizeof(cl_float4), NULL, &ocl->err);
     
     ocl->dev.U0   = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, msh->nv_tot*sizeof(cl_float4), NULL, &ocl->err);
-    ocl->dev.U1   = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, msh->nv_tot*sizeof(cl_float4), NULL, &ocl->err);
+    ocl->dev.U1   = clCreateBuffer(ocl->context, CL_MEM_READ_WRITE    , msh->nv_tot*sizeof(cl_float4), NULL, &ocl->err);
     ocl->dev.F1   = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, msh->nv_tot*sizeof(cl_float4), NULL, &ocl->err);
     
     ocl->dev.J.ii = clCreateBuffer(ocl->context, CL_MEM_HOST_READ_ONLY, 27*msh->nv_tot*sizeof(cl_int16),   NULL, &ocl->err);

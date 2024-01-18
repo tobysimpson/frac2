@@ -800,10 +800,10 @@ kernel void vtx_assm(const  int3     vtx_dim,
                             
                             //stress (lam*tr(E)I + 2*mu*E, pos/neg)
                             dS1 = 2e0f*mat_prm.s1*dS1;
-                            dS1.s035 += mat_prm.s0*(trE2>0e0f)*(trE2);      //if(trace of basis or solution?)
+                            dS1.s035 += mat_prm.s0*(trE>=0e0f)*(trE2);      //if(trace of basis or solution?)
                             
                             dS2 = 2e0f*mat_prm.s1*dS2;
-                            dS2.s035 += mat_prm.s0*(trE2<0e0f)*(trE2);
+                            dS2.s035 += mat_prm.s0*(trE<=0e0f)*(trE2);
                             
                             //write uu
                             int idx2 = 4*dim1 + dim2;

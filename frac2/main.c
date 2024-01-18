@@ -45,8 +45,8 @@ int main(int argc, const char * argv[])
     ocl.err = clSetKernelArg(ocl.vtx_bnd2,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd2, 3, NULL, nv, NULL, 0, NULL, NULL);
     
-    //copy U1 to U0
-    ocl.err = clEnqueueCopyBuffer( ocl.command_queue, ocl.dev.U1, ocl.dev.U0, 0, 0, 4*msh.nv_tot*sizeof(float), 0, NULL, NULL);  //copy to prev
+    //store prev
+    ocl.err = clEnqueueCopyBuffer( ocl.command_queue, ocl.dev.U1, ocl.dev.U0, 0, 0, msh.nv_tot*sizeof(cl_float4), 0, NULL, NULL);
     
     //assemble
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_assm, 3, NULL, nv, NULL, 0, NULL, &ocl.event);
@@ -56,7 +56,7 @@ int main(int argc, const char * argv[])
     ocl.err = clSetKernelArg(ocl.vtx_bnd3,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd3, 3, NULL, nv, NULL, 0, NULL, NULL);
     
-    //bnd4 crack I
+    //bnd4 crack=I
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd4, 3, NULL, nv, NULL, 0, NULL, NULL);
 
     //read from device
@@ -76,15 +76,14 @@ int main(int argc, const char * argv[])
 //    memset(ocl.hst.U1c, 0, 1*msh.nv_tot*sizeof(float));
     
     //solve
-//    slv_mtx(&msh, &ocl);
+    slv_mtx(&msh, &ocl);
     
-    //store prior
-//    ocl.err = clEnqueueCopyBuffer( ocl.command_queue, ocl.dev.U1c, ocl.dev.U0c, 0, 0, 1*msh.nv_tot*sizeof(float), 0, NULL, NULL);
+    //store prev
+    ocl.err = clEnqueueCopyBuffer( ocl.command_queue, ocl.dev.U1, ocl.dev.U0, 0, 0, msh.nv_tot*sizeof(cl_float4), 0, NULL, NULL);
     
     //write to device
-//    ocl.err = clEnqueueWriteBuffer(ocl.command_queue, ocl.dev.U1u, CL_TRUE, 0, 3*msh.nv_tot*sizeof(float), ocl.hst.U1u, 0, NULL, NULL);
-//    ocl.err = clEnqueueWriteBuffer(ocl.command_queue, ocl.dev.U1c, CL_TRUE, 0, 1*msh.nv_tot*sizeof(float), ocl.hst.U1c, 0, NULL, NULL);
-     
+    ocl.err = clEnqueueWriteBuffer(ocl.command_queue, ocl.dev.U1, CL_TRUE, 0, msh.nv_tot*sizeof(cl_float4), ocl.hst.U1, 0, NULL, NULL);
+
     
 //    write vtk
     wrt_vtk(&msh, &ocl);
