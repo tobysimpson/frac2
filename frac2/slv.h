@@ -25,8 +25,6 @@ void dsp_vec(DenseVector_Float v)
 //solve
 int slv_mtx(struct msh_obj *msh, struct ocl_obj *ocl)
 {
-    printf("slv_u\n");
-    
     //init mtx
     SparseAttributes_t atts;
     atts.kind = SparseOrdinary;        // SparseOrdinary/SparseSymmetric

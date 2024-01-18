@@ -737,7 +737,8 @@ kernel void vtx_assm(const  int3     vtx_dim,
 //                    printf("%+v8f\n", E1); //ok
                     
                     //write
-                    ff[dim1] += sym_tip(cc[0]*S1 + S2, E1)*qw;
+//                    ff[dim1] += sym_tip(cc[0]*S1 + S2, E1)*qw;
+                    ff[dim1] += sym_tip(mec_s(E, mat_prm), E1)*qw; //lin elas
                 }
                 
                 //rhs c
@@ -796,11 +797,12 @@ kernel void vtx_assm(const  int3     vtx_dim,
                             //split (strain)
                             eig_drv(E2, D, V, &dS1, &dS2);
                             
+                        
 //                            printf("%+v8f\n", dS1);
                             
                             //stress (lam*tr(E)I + 2*mu*E, pos/neg)
                             dS1 = 2e0f*mat_prm.s1*dS1;
-                            dS1.s035 += mat_prm.s0*(trE>=0e0f)*(trE2);      //if(trace of basis or solution?)
+                            dS1.s035 += mat_prm.s0*(trE>=0e0f)*(trE2);      //if(trace of solution)then(trace of basis)
                             
                             dS2 = 2e0f*mat_prm.s1*dS2;
                             dS2.s035 += mat_prm.s0*(trE<=0e0f)*(trE2);
@@ -888,25 +890,14 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
     //bools
     int b1 = (vtx1_pos1.z == 0);                    //base
     int b2 = (vtx1_pos1.z == (vtx_dim.z - 1));      //top
-    
-    //base
-    if(b1)
-    {
-        //rhs to soln
-        F1[vtx1_idx1].xyz = (float3){0e0f,0e0f,0e0f};
-    }
-    
-    //top
-    if(b2)
-    {
-        //rhs to soln
-//        F1[vtx1_idx1].xyz = (float3){0e0f,0e0f,mat_prm.s7};
-        F1[vtx1_idx1].xyz = mat_prm.s7;
-    }
 
-    //I
+
+    //I,F=0
     if((b1+b2)>0) //or
     {
+        //rhs to zero (no step)
+        F1[vtx1_idx1].xyz = 0e0f;
+        
         //vtx2
         for(int vtx2_idx3=0; vtx2_idx3<27; vtx2_idx3++)
         {
@@ -981,3 +972,18 @@ kernel void vtx_bnd4(const  int3    vtx_dim,
     return;
 }
 
+
+
+//notch
+kernel void vtx_step(const  int3    vtx_dim,
+                     global float4 *U0,
+                     global float4 *U1)
+{
+    int3 vtx1_pos1  = {get_global_id(0), get_global_id(1), get_global_id(2)};
+    int  vtx1_idx1 = fn_idx1(vtx1_pos1, vtx_dim);
+    
+    //half step
+    U1[vtx1_idx1] = U0[vtx1_idx1] - 0.5f*U1[vtx1_idx1];
+
+    return;
+}

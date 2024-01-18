@@ -35,14 +35,14 @@ void wrt_raw(void *ptr, size_t n, size_t bytes, char *file_name)
 
 
 //write
-void wrt_vtk(struct msh_obj *msh, struct ocl_obj *ocl)
+void wrt_vtk(struct msh_obj *msh, struct ocl_obj *ocl, int k)
 {
 
     FILE* file1;
     char file1_name[250];
     
     //file name
-    sprintf(file1_name, "%s%s.%03d.vtk", ROOT_WRITE, "grid1", 0);
+    sprintf(file1_name, "%s%s.%03d.vtk", ROOT_WRITE, "grid1", k);
     
     //open
     file1 = fopen(file1_name,"w");
@@ -82,7 +82,6 @@ void wrt_vtk(struct msh_obj *msh, struct ocl_obj *ocl)
     {
         fprintf(file1, "%e %e %e\n", ocl->hst.U1[i].x, ocl->hst.U1[i].y, ocl->hst.U1[i].z);
     }
-
     
     /*
      ===================
