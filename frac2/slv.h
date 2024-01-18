@@ -34,9 +34,10 @@ int slv_mtx(struct msh_obj *msh, struct ocl_obj *ocl)
     long blk_num = 27*16*msh->nv_tot;
     int num_rows = 4*msh->nv_tot;
     int num_cols = 4*msh->nv_tot;
+    uint8_t blk_sz = 1;
 
     //create
-    SparseMatrix_Float A = SparseConvertFromCoordinate(num_rows, num_cols, blk_num, 1, atts, ocl->hst.J.ii, ocl->hst.J.jj, ocl->hst.J.vv);  //duplicates sum
+    SparseMatrix_Float A = SparseConvertFromCoordinate(num_rows, num_cols, blk_num, blk_sz, atts, ocl->hst.J.ii, ocl->hst.J.jj, ocl->hst.J.vv);  //duplicates sum
     
     //vecs
     DenseVector_Float u;
@@ -54,12 +55,22 @@ int slv_mtx(struct msh_obj *msh, struct ocl_obj *ocl)
      ========================
      */
     
+//    SparseGMRESOptions options;
+//    options.maxIterations = 100000;
+//    options.nvec = 10;
+//    options.atol = 1.0;
+//    options.rtol = 1.0;
+//    options.variant = SparseVariantGMRES;
+    
+    SparseSolve(SparseGMRES(), A, f, u);
+    
+
     //iterate
 //    SparseSolve(SparseConjugateGradient(), A, f, u);    // SparsePreconditionerDiagonal/SparsePreconditionerDiagScaling
-    SparseSolve(SparseGMRES(), A, f, u);
+//    SparseSolve(SparseGMRES(), A, f, u);
 //    SparseSolve(SparseLSMR(), A, f, u); //minres - symmetric
     
-    //QR
+//    //QR
 //    SparseOpaqueFactorization_Float QR = SparseFactor(SparseFactorizationQR, A);       //no
 //    SparseSolve(QR, f , u);
 //    SparseCleanup(QR);
