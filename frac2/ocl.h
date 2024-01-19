@@ -11,6 +11,7 @@
 
 #define ROOT_PRG    "/Users/toby/Documents/USI/postdoc/fracture/xcode/frac2/frac2"
 
+
 struct coo_dev
 {
     cl_mem  ii;

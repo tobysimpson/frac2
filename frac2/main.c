@@ -39,6 +39,9 @@ int main(int argc, const char * argv[])
      init
      ==============================
      */
+    
+    //init
+    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_init, 3, NULL, nv, NULL, 0, NULL, NULL);
 
     //init Uc
 //    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd1, 3, NULL, nv, NULL, 0, NULL, NULL);
@@ -58,12 +61,10 @@ int main(int argc, const char * argv[])
      */
     
     //newton iterations
-    for(int k=0; k<100; k++)
+    for(int k=0; k<1; k++)
     {
         printf("%2d\n",k);
-        
-        //reset J,F
-        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_init, 3, NULL, nv, NULL, 0, NULL, NULL);
+    
         
         //assemble
         ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_assm, 3, NULL, nv, NULL, 0, NULL, &ocl.event);
@@ -115,7 +116,7 @@ int main(int argc, const char * argv[])
         memset(ocl.hst.U1, 0, msh.nv_tot*sizeof(cl_float4));
         
         //solve
-        slv_mtx(&msh, &ocl);
+        //slv_mtx(&msh, &ocl);
         
         //dev store prev U1->U0
         ocl.err = clEnqueueCopyBuffer( ocl.command_queue, ocl.dev.U1, ocl.dev.U0, 0, 0, msh.nv_tot*sizeof(cl_float4), 0, NULL, NULL);
