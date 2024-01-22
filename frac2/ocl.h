@@ -9,6 +9,7 @@
 #define ocl_h
 
 
+
 #define ROOT_PRG    "/Users/toby/Documents/USI/postdoc/fracture/xcode/frac2/frac2"
 
 
@@ -68,7 +69,8 @@ struct ocl_obj
     struct mem_dev dev;
     
     //kernels
-    cl_kernel           vtx_init;
+    cl_kernel           vtx_ini1;
+    cl_kernel           vtx_ini2;
     cl_kernel           vtx_assm;
     cl_kernel           vtx_bnd1;
     cl_kernel           vtx_bnd2;
@@ -169,7 +171,9 @@ void ocl_init(struct msh_obj *msh, struct ocl_obj *ocl)
      =============================
      */
 
-    ocl->vtx_init = clCreateKernel(ocl->program, "vtx_init", &ocl->err);
+    ocl->vtx_ini1 = clCreateKernel(ocl->program, "vtx_ini1", &ocl->err);
+    ocl->vtx_ini2 = clCreateKernel(ocl->program, "vtx_ini2", &ocl->err);
+    
     ocl->vtx_assm = clCreateKernel(ocl->program, "vtx_assm", &ocl->err);
     
     ocl->vtx_bnd1 = clCreateKernel(ocl->program, "vtx_bnd1", &ocl->err);
@@ -217,16 +221,20 @@ void ocl_init(struct msh_obj *msh, struct ocl_obj *ocl)
      =============================
      */
 
-    ocl->err = clSetKernelArg(ocl->vtx_init,  0, sizeof(cl_int3),   (void*)&msh->vtx_dim);
-    ocl->err = clSetKernelArg(ocl->vtx_init,  1, sizeof(cl_float3), (void*)&msh->x0);
-    ocl->err = clSetKernelArg(ocl->vtx_init,  2, sizeof(cl_float3), (void*)&msh->dx);
-    ocl->err = clSetKernelArg(ocl->vtx_init,  3, sizeof(cl_mem),    (void*)&ocl->dev.vtx_xx);
-    ocl->err = clSetKernelArg(ocl->vtx_init,  4, sizeof(cl_mem),    (void*)&ocl->dev.U0);
-    ocl->err = clSetKernelArg(ocl->vtx_init,  5, sizeof(cl_mem),    (void*)&ocl->dev.U1);
-    ocl->err = clSetKernelArg(ocl->vtx_init,  6, sizeof(cl_mem),    (void*)&ocl->dev.F1);
-    ocl->err = clSetKernelArg(ocl->vtx_init,  7, sizeof(cl_mem),    (void*)&ocl->dev.J.ii);
-    ocl->err = clSetKernelArg(ocl->vtx_init,  8, sizeof(cl_mem),    (void*)&ocl->dev.J.jj);
-    ocl->err = clSetKernelArg(ocl->vtx_init,  9, sizeof(cl_mem),    (void*)&ocl->dev.J.vv);
+    ocl->err = clSetKernelArg(ocl->vtx_ini1,  0, sizeof(cl_int3),   (void*)&msh->vtx_dim);
+    ocl->err = clSetKernelArg(ocl->vtx_ini1,  1, sizeof(cl_float3), (void*)&msh->x0);
+    ocl->err = clSetKernelArg(ocl->vtx_ini1,  2, sizeof(cl_float3), (void*)&msh->dx);
+    ocl->err = clSetKernelArg(ocl->vtx_ini1,  3, sizeof(cl_mem),    (void*)&ocl->dev.vtx_xx);
+    ocl->err = clSetKernelArg(ocl->vtx_ini1,  4, sizeof(cl_mem),    (void*)&ocl->dev.U0);
+    ocl->err = clSetKernelArg(ocl->vtx_ini1,  5, sizeof(cl_mem),    (void*)&ocl->dev.U1);
+    ocl->err = clSetKernelArg(ocl->vtx_ini1,  6, sizeof(cl_mem),    (void*)&ocl->dev.F1);
+    ocl->err = clSetKernelArg(ocl->vtx_ini1,  7, sizeof(cl_mem),    (void*)&ocl->dev.J.ii);
+    ocl->err = clSetKernelArg(ocl->vtx_ini1,  8, sizeof(cl_mem),    (void*)&ocl->dev.J.jj);
+    ocl->err = clSetKernelArg(ocl->vtx_ini1,  9, sizeof(cl_mem),    (void*)&ocl->dev.J.vv);
+    
+    ocl->err = clSetKernelArg(ocl->vtx_ini2,  0, sizeof(cl_int3),   (void*)&msh->vtx_dim);
+    ocl->err = clSetKernelArg(ocl->vtx_ini2,  1, sizeof(cl_mem),    (void*)&ocl->dev.F1);
+    ocl->err = clSetKernelArg(ocl->vtx_ini2,  2, sizeof(cl_mem),    (void*)&ocl->dev.J.vv);
 
     ocl->err = clSetKernelArg(ocl->vtx_assm,  0, sizeof(cl_int3),   (void*)&msh->vtx_dim);
     ocl->err = clSetKernelArg(ocl->vtx_assm,  1, sizeof(cl_float3), (void*)&msh->dx);
@@ -264,7 +272,8 @@ void ocl_final(struct msh_obj *msh, struct ocl_obj *ocl)
     ocl->err = clFinish(ocl->command_queue);
     
     //kernels
-    ocl->err = clReleaseKernel(ocl->vtx_init);
+    ocl->err = clReleaseKernel(ocl->vtx_ini1);
+    ocl->err = clReleaseKernel(ocl->vtx_ini2);
     ocl->err = clReleaseKernel(ocl->vtx_assm);
     ocl->err = clReleaseKernel(ocl->vtx_bnd1);
     ocl->err = clReleaseKernel(ocl->vtx_bnd2);

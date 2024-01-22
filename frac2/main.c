@@ -41,13 +41,13 @@ int main(int argc, const char * argv[])
      */
     
     //init
-    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_init, 3, NULL, nv, NULL, 0, NULL, NULL);
+    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_ini1, 3, NULL, nv, NULL, 0, NULL, NULL);
 
-    //init Uc
-//    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd1, 3, NULL, nv, NULL, 0, NULL, NULL);
+    //crack
+    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd1, 3, NULL, nv, NULL, 0, NULL, NULL);
     
-    //init Uu
-    msh.mat_prm.s7 = 1e-1f;                                                                                      //update
+    //disp
+    msh.mat_prm.s7 = 1e-3f;                                                                                      //update
     ocl.err = clSetKernelArg(ocl.vtx_bnd2,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd2, 3, NULL, nv, NULL, 0, NULL, NULL);
     
@@ -61,21 +61,24 @@ int main(int argc, const char * argv[])
      */
     
     //newton iterations
-    for(int k=0; k<1; k++)
+    for(int k=0; k<100; k++)
     {
         printf("%2d\n",k);
-    
         
+        //reset Jvv, F1
+        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_ini2, 3, NULL, nv, NULL, 0, NULL, NULL);
+    
         //assemble
         ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_assm, 3, NULL, nv, NULL, 0, NULL, &ocl.event);
-        clWaitForEvents(1, &ocl.event);                                                                             //for profiling
         
-        //bnd3 - identity, zero rhs
-        ocl.err = clSetKernelArg(ocl.vtx_bnd3,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
+        //for profiling
+        clWaitForEvents(1, &ocl.event);
+        
+        //bnd3 - Jvv->I, F1->0
         ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd3, 3, NULL, nv, NULL, 0, NULL, NULL);
         
         //bnd4 crack=I
-        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd4, 3, NULL, nv, NULL, 0, NULL, NULL);
+//        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd4, 3, NULL, nv, NULL, 0, NULL, NULL);
         
         //read from device
         ocl.err = clEnqueueReadBuffer(ocl.command_queue, ocl.dev.vtx_xx, CL_TRUE, 0, msh.nv_tot*sizeof(cl_float4), ocl.hst.vtx_xx, 0, NULL, NULL);
@@ -116,12 +119,12 @@ int main(int argc, const char * argv[])
         memset(ocl.hst.U1, 0, msh.nv_tot*sizeof(cl_float4));
         
         //solve
-        //slv_mtx(&msh, &ocl);
+        slv_mtx(&msh, &ocl);
         
-        //dev store prev U1->U0
+        //copy U1->U0
         ocl.err = clEnqueueCopyBuffer( ocl.command_queue, ocl.dev.U1, ocl.dev.U0, 0, 0, msh.nv_tot*sizeof(cl_float4), 0, NULL, NULL);
         
-        //write J^-1F to U1
+        //write step to U1
         ocl.err = clEnqueueWriteBuffer(ocl.command_queue, ocl.dev.U1, CL_TRUE, 0, msh.nv_tot*sizeof(cl_float4), ocl.hst.U1, 0, NULL, NULL);
         
         //newton step
@@ -143,7 +146,7 @@ int main(int argc, const char * argv[])
     clGetEventProfilingInfo(ocl.event, CL_PROFILING_COMMAND_START, sizeof(time0), &time0, NULL);
     clGetEventProfilingInfo(ocl.event, CL_PROFILING_COMMAND_END,   sizeof(time1), &time1, NULL);
 
-    double nanoSeconds = time1-time0;
+    float nanoSeconds = time1-time0;
     printf("nv, time(ms)\n");
     printf("%07d, %0.4f;\n", msh.nv_tot, nanoSeconds/1000000.0);
 

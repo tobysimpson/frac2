@@ -55,14 +55,14 @@ int slv_mtx(struct msh_obj *msh, struct ocl_obj *ocl)
      ========================
      */
     
-//    SparseGMRESOptions options;
-//    options.maxIterations = 100000;
-//    options.nvec = 10;
-//    options.atol = 1.0;
-//    options.rtol = 1.0;
-//    options.variant = SparseVariantGMRES;
+    SparseGMRESOptions options;
+    options.maxIterations = 1000;
+    options.nvec = 0;
+    options.atol = 1e0f;
+    options.rtol = 1e0f;
+    options.variant = SparseVariantGMRES;
     
-    SparseSolve(SparseGMRES(), A, f, u);
+    SparseSolve(SparseGMRES(options), A, f, u);
     
 
     //iterate

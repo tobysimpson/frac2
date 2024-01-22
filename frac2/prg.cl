@@ -624,7 +624,7 @@ float8 eig_mpinv(float lam, float3 D, float16 V)
  */
 
 //init
-kernel void vtx_init(const  int3    vtx_dim,
+kernel void vtx_ini1(const  int3    vtx_dim,
                      const  float3  x0,
                      const  float3  dx,
                      global float4  *vtx_xx,
@@ -674,6 +674,50 @@ kernel void vtx_init(const  int3    vtx_dim,
                 int idx2 = 4*dim1 + dim2;
                 ii[idx2] = vtx2_bnd1*(4*vtx1_idx1 + dim1);
                 jj[idx2] = vtx2_bnd1*(4*vtx2_idx1 + dim2);
+                vv[idx2] = 0e0f; //vtx2_bnd1*(4*dim1 + dim2 + 1);
+                
+            } //dim2
+            
+        } //dim1
+        
+    } //vtx2
+    
+    return;
+}
+
+
+//reset
+kernel void vtx_ini2(const  int3    vtx_dim,
+                     global float4  *F1,
+                     global float16 *J_vv)
+{
+    int3 vtx1_pos1 = {get_global_id(0)  ,get_global_id(1)  ,get_global_id(2)};
+    int  vtx1_idx1 = fn_idx1(vtx1_pos1, vtx_dim);
+
+    //vec
+    F1[vtx1_idx1] = 0e0f;
+    
+    //vtx2
+    for(int vtx2_idx3=0; vtx2_idx3<27; vtx2_idx3++)
+    {
+//        int3 vtx2_pos1 = vtx1_pos1 + off3[vtx2_idx3] - 1;
+//        int  vtx2_idx1 = fn_idx1(vtx2_pos1, vtx_dim);
+//        int  vtx2_bnd1 = fn_bnd1(vtx2_pos1, vtx_dim);
+        
+        //block
+        int idx1 = 27*vtx1_idx1 + vtx2_idx3;
+        
+        //block pointers
+        global float* vv = (global float*)&J_vv[idx1];
+        
+        //dim1
+        for(int dim1=0; dim1<4; dim1++)
+        {
+            //dim2
+            for(int dim2=0; dim2<4; dim2++)
+            {
+                //zero
+                int idx2 = 4*dim1 + dim2;
                 vv[idx2] = 0e0f; //vtx2_bnd1*(4*dim1 + dim2 + 1);
                 
             } //dim2
@@ -820,7 +864,9 @@ kernel void vtx_assm(const  int3     vtx_dim,
                 }
                 
                 //rhs c
-                ff[3] += ((gg[1]*p1 + mat_prm.s4*c1 + mat_prm.s6*(dc)*(dc<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s5*dot(du[3], bas_gg[vtx1_idx2]))*qw;
+                ff[3] += ((gg[1]*p1 + mat_prm.s4*c1)*bas_ee[vtx1_idx2])*qw;
+                ff[3] += mat_prm.s5*dot(du.s37b, bas_gg[vtx1_idx2])*qw;
+                ff[3] += (mat_prm.s6*(dc)*(dc<0e0f)*bas_ee[vtx1_idx2])*qw;
                 
                 //vtx2
                 for(int vtx2_idx2=0; vtx2_idx2<8; vtx2_idx2++)
@@ -901,7 +947,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
 }
 
 
-//notch
+//notch Uc
 kernel void vtx_bnd1(const  int3   vtx_dim,
                      global float4 *U1)
 {
@@ -934,16 +980,14 @@ kernel void vtx_bnd2(const  int3   vtx_dim,
     //    int b1 = (vtx1_pos1.z == 0);                    //base
     int b2 = (vtx1_pos1.z == (vtx_dim.z - 1));      //top
     
-    
-    
     //init U
-    U1[vtx1_idx1] = (float4){(float3)b2*mat_prm.s7, 0e0f};
+    U1[vtx1_idx1].xyz = (float3)b2*mat_prm.s7;
     
     return;
 }
 
 
-//dirichlet
+//dirichlet Jvv->I, F1->0 (u only)
 kernel void vtx_bnd3(const  int3    vtx_dim,
                      global float4  *F1,
                      global float16 *J_vv)
@@ -955,10 +999,12 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
     int b1 = (vtx1_pos1.z == 0);                    //base
     int b2 = (vtx1_pos1.z == (vtx_dim.z - 1));      //top
     
-    //I,F=0
+//    printf("%d %d %d %d\n",vtx1_pos1.z, b1, b2, (b1+b2)>0);
+    
+    //Jvv=I,F1=0
     if((b1+b2)>0) //or
     {
-        //rhs to zero (no step)
+        //rhs to zero (no U step)
         F1[vtx1_idx1].xyz = (float3){0e0f, 0e0f, 0e0f};
         
         //vtx2
@@ -972,12 +1018,11 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
             int idx1 = 27*vtx1_idx1 + vtx2_idx3;
             global float* vv = (global float*)&J_vv[idx1];
             
-            
             //dim1
-            for(int dim1=0; dim1<4; dim1++)
+            for(int dim1=0; dim1<3; dim1++)
             {
                 //dim2
-                for(int dim2=0; dim2<4; dim2++)
+                for(int dim2=0; dim2<3; dim2++)
                 {
                     //uu
                     int idx2 = 4*dim1 + dim2;
@@ -995,7 +1040,7 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
 }
 
 
-//crack I
+//crack->I, Fc->0
 kernel void vtx_bnd4(const  int3    vtx_dim,
                      global float4  *F1,
                      global float16 *J_vv)
@@ -1003,6 +1048,8 @@ kernel void vtx_bnd4(const  int3    vtx_dim,
     int3 vtx1_pos1  = {get_global_id(0), get_global_id(1), get_global_id(2)};
     int  vtx1_idx1 = fn_idx1(vtx1_pos1, vtx_dim);
     
+    //rhs to zero (no c step)
+    F1[vtx1_idx1].w = 0e0f;
     
     //vtx2
     for(int vtx2_idx3=0; vtx2_idx3<27; vtx2_idx3++)
@@ -1015,7 +1062,10 @@ kernel void vtx_bnd4(const  int3    vtx_dim,
         int idx1 = 27*vtx1_idx1 + vtx2_idx3;
         global float* vv = (global float*)&J_vv[idx1];
         
-        //cc->I
+        //cc row->I
+        vv[12] = 0e0f;
+        vv[13] = 0e0f;
+        vv[14] = 0e0f;
         vv[15] = vtx2_bnd1*(vtx1_idx1==vtx2_idx1);
         
     } //vtx2
