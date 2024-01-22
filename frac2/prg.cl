@@ -977,11 +977,12 @@ kernel void vtx_bnd2(const  int3   vtx_dim,
     int  vtx1_idx1 = fn_idx1(vtx1_pos1, vtx_dim);
     
     //bools
-    //    int b1 = (vtx1_pos1.z == 0);                    //base
+    //int b1 = (vtx1_pos1.z == 0);                    //base
     int b2 = (vtx1_pos1.z == (vtx_dim.z - 1));      //top
     
     //init U
     U1[vtx1_idx1].xyz = (float3)b2*mat_prm.s7;
+//    U1[vtx1_idx1].z = (float)b2*mat_prm.s7;
     
     return;
 }
@@ -993,7 +994,7 @@ kernel void vtx_bnd3(const  int3    vtx_dim,
                      global float16 *J_vv)
 {
     int3 vtx1_pos1  = {get_global_id(0), get_global_id(1), get_global_id(2)};
-    int vtx1_idx1 = fn_idx1(vtx1_pos1, vtx_dim);
+    int  vtx1_idx1 = fn_idx1(vtx1_pos1, vtx_dim);
     
     //bools
     int b1 = (vtx1_pos1.z == 0);                    //base

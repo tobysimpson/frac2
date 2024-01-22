@@ -47,7 +47,7 @@ int main(int argc, const char * argv[])
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd1, 3, NULL, nv, NULL, 0, NULL, NULL);
     
     //disp
-    msh.mat_prm.s7 = 1e-3f;                                                                                      //update
+    msh.mat_prm.s7 = 1e-1f;                                                                                      //update
     ocl.err = clSetKernelArg(ocl.vtx_bnd2,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd2, 3, NULL, nv, NULL, 0, NULL, NULL);
     

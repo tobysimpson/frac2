@@ -57,7 +57,7 @@ int slv_mtx(struct msh_obj *msh, struct ocl_obj *ocl)
     
     SparseGMRESOptions options;
     options.maxIterations = 1000;
-    options.nvec = 0;
+    options.nvec = 10;
     options.atol = 1e0f;
     options.rtol = 1e0f;
     options.variant = SparseVariantGMRES;
