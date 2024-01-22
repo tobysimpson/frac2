@@ -39,21 +39,26 @@ float8  sym_mdmT(float16 V, float3 D);
 float8  sym_sumT(float16 A);
 float   sym_tip(float8 A, float8 B);
 
-float8  mec_e(float16 du);
-float8  mec_s(float8 E, float8 mat_prm);
+float8  mec_E(float16 du);
+float8  mec_S(float8 E, float8 mat_prm);
 float   mec_p(float8 E, float8 mat_prm);
 float   mec_p1(float3 D, float8 mat_prm);
-void    mec_s12(float D[3], float3 V[3], float8 mat_prm, float8 *S1, float8 *S2);
+
+void    mec_D1D2(float3 D, float3 *D1, float3 *D2);
+void    mec_S1S2(float3 D, float16 V, float8 mat_prm, float8 *S1, float8 *S2);
+void    mec_dS1dS2(float8 dA, float3 D, float16 V, float8 *dS1, float8 *dS2);
+float   mec_dp1(float3 D, float16 V, float16 dU, float8 mat_prm);
 
 void    mem_gr3(global float4 *buf, float4 uu3[27], int3 pos, int3 dim);
 void    mem_lr2(float4 uu3[27], float4 uu2[8], int3 pos);
 
 float3  eig_val(float8 A);
 float16 eig_vec(float8 A, float3 D);
-void    eig_D1D2(float3 D, float3 *D1, float3 *D2);
-void    eig_dS1dS2(float8 dA, float3 D, float16 V, float8 *dS1, float8 *dS2);
 float8  eig_mpinv(float lam, float3 D, float16 V);
-float   eig_dpdu(float D[3], float3 V[3], float3 dU[3], float8 mat_prm);
+
+
+
+
 
 
 /*
@@ -363,7 +368,9 @@ float8 sym_sumT(float16 A)
 //sym tensor inner prod
 float sym_tip(float8 A, float8 B)
 {
-    return A.s0*B.s0 + 2e0f*A.s1*B.s1 + 2e0f*A.s2*B.s2 + A.s3*B.s3 + 2e0f*A.s4*B.s4 + A.s5*B.s5;
+//    return A.s0*B.s0 + 2e0f*A.s1*B.s1 + 2e0f*A.s2*B.s2 + A.s3*B.s3 + 2e0f*A.s4*B.s4 + A.s5*B.s5;
+    
+    return dot(A.s0123,B.s0123) + dot(A.s45,B.s45);
 }
 
 
@@ -374,14 +381,14 @@ float sym_tip(float8 A, float8 B)
  */
 
 //strain (du + du^T)/2
-float8 mec_e(float16 du)
+float8 mec_E(float16 du)
 {
     return 5e-1f*sym_sumT(du);
 }
 
 
 //stress pk2 = lam*tr(e)*I + 2*mu*e
-float8 mec_s(float8 E, float8 mat_prm)
+float8 mec_S(float8 E, float8 mat_prm)
 {
     float8 S = 2e0f*mat_prm.s1*E;
     S.s035 += mat_prm.s0*sym_tr(E);
@@ -390,7 +397,7 @@ float8 mec_s(float8 E, float8 mat_prm)
 }
 
 
-//energy phi = 0.5*lam*(tr(E))^2 + mu*tr(E^2)
+//energy = 0.5*lam*(tr(E))^2 + mu*tr(E^2)
 float mec_p(float8 E, float8 mat_prm)
 {
     return 5e-1f*mat_prm.s0*pown(sym_tr(E),2) + mat_prm.s1*sym_tr(sym_mm(E,E));
@@ -406,27 +413,108 @@ float mec_p1(float3 D, float8 mat_prm)
     //split
     float3 D1;
     float3 D2;
-    eig_D1D2(D, &D1, &D2);
+    mec_D1D2(D, &D1, &D2);
     
     return 5e-1f*mat_prm.s0*trD*trD*(trD>0e0f) + mat_prm.s1*dot(D1,D1);
 }
 
 
-void mec_s12(float D[3], float3 V[3], float8 mat_prm, float8 *S1, float8 *S2)
+//split eigenvalues miehe2010
+void mec_D1D2(float3 D, float3 *D1, float3 *D2)
 {
-    float trE = D[0] + D[1] + D[2];
-    
-    //loop eigs
-    for(int i=0; i<3; i++)
-    {
-        float8 vvT = sym_vvT(V[i]);
-        
-        *S1 += mat_prm.s0*trE*(trE>0e0f) + 2e0f*mat_prm.s1*D[i]*(D[i]>0e0f)*vvT;
-        *S2 += mat_prm.s0*trE*(trE<0e0f) + 2e0f*mat_prm.s1*D[i]*(D[i]<0e0f)*vvT;
-    }
+    *D1 = 5e-1f*(fabs(D) + D);
+    *D2 = 5e-1f*(fabs(D) - D);
     
     return;
 }
+
+
+//split stress (miehe2010)
+void mec_S1S2(float3 D, float16 V, float8 mat_prm, float8 *S1, float8 *S2)
+{
+    float trE = dot(D,(float3){1e0f,1e0f,1e0f});
+    
+    //ramp
+    trE = 5e-1f*(fabs(trE)+trE);
+    
+    //vals
+    float3 D1 = 0e0f;
+    float3 D2 = 0e0f;
+    mec_D1D2(D, &D1, &D2);
+    
+    //vecs
+    float8 vv1 = sym_vvT(V.s012);
+    float8 vv2 = sym_vvT(V.s456);
+    float8 vv3 = sym_vvT(V.s89a);
+    
+    //pos
+    *S1 += (mat_prm.s0*trE + 2e0f*mat_prm.s1*D1.x)*vv1;
+    *S1 += (mat_prm.s0*trE + 2e0f*mat_prm.s1*D1.y)*vv2;
+    *S1 += (mat_prm.s0*trE + 2e0f*mat_prm.s1*D1.z)*vv3;
+    
+    //neg
+    *S2 += (mat_prm.s0*trE + 2e0f*mat_prm.s1*D2.x)*vv1;
+    *S2 += (mat_prm.s0*trE + 2e0f*mat_prm.s1*D2.y)*vv2;
+    *S2 += (mat_prm.s0*trE + 2e0f*mat_prm.s1*D2.z)*vv3;
+    
+    return;
+}
+
+
+//derivative of A in direction of dA where A = VDV^T, Jodlbauer2020
+void mec_dS1dS2(float8 dA, float3 D, float16 V, float8 *dS1, float8 *dS2)
+{
+    //vec derivs
+    float16 dV;
+    dV.s012 = -sym_mv(sym_mm(eig_mpinv(D.x, D, V), dA), V.s012);
+    dV.s456 = -sym_mv(sym_mm(eig_mpinv(D.y, D, V), dA), V.s456);
+    dV.s89a = -sym_mv(sym_mm(eig_mpinv(D.z, D, V), dA), V.s89a);
+
+    //val derivs
+    float3  dD;
+    dD.x = dot(V.s012, sym_mv(dA, V.s012));
+    dD.y = dot(V.s456, sym_mv(dA, V.s456));
+    dD.z = dot(V.s89a, sym_mv(dA, V.s89a));
+    
+    //split derivs
+    float3 dD1;
+    float3 dD2;
+    mec_D1D2(dD, &dD1, &dD2);
+    
+    //split vals
+    float3 D1;
+    float3 D2;
+    mec_D1D2(D, &D1, &D2);
+    
+    //derivs
+    *dS1 = sym_mdmT(V, dD1) + sym_sumT(mtx_mm(mtx_md(dV,D1), mtx_mT(V) ));
+    *dS2 = sym_mdmT(V, dD2) + sym_sumT(mtx_mm(mtx_md(dV,D2), mtx_mT(V) ));
+
+    return;
+}
+
+
+//derivative of energy wrt disp  d(energy+)/du
+float mec_dp1(float3 D, float16 V, float16 dU, float8 mat_prm)
+{
+    //derivatives of principal strains wrt perturbation
+    float3 dD = {dot(V.s012, mtx_mv(dU, V.s012)), dot(V.s456, mtx_mv(dU, V.s456)), dot(V.s89a, mtx_mv(dU, V.s89a))};
+
+    //sum
+    float sumdD = dot(dD,(float3){1e0f,1e0f,1e0f});
+    
+    //split vals
+    float3 D1;
+    float3 D2;
+    mec_D1D2(D, &D1, &D2);
+    
+    //trace
+    float trE = dot(D,(float3){1e0f,1e0f,1e0f});
+    
+    //test pos trace for first part, inidividual eigs (primary strains) for second part
+    return mat_prm.s0*(trE>0e0f)*sumdD + 2e0f*mat_prm.s1*dot(D1,D1);
+}
+
 
 
 /*
@@ -479,47 +567,6 @@ float16 eig_vec(float8 A, float3 D)
     return V;
 }
 
-//split eigenvalues
-void eig_D1D2(float3 D, float3 *D1, float3 *D2)
-{
-    *D1 = (float3){(D.x>=0e0f)*D.x, (D.y>=0e0f)*D.y, (D.z>=0e0f)*D.z};
-    *D2 = (float3){(D.x<=0e0f)*D.x, (D.y<=0e0f)*D.y, (D.z<=0e0f)*D.z};
-    
-    return;
-}
-
-
-//derivative of A in direction of dA where A = VDV^T, Jodlbauer2020
-void eig_dS1dS2(float8 dA, float3 D, float16 V, float8 *dS1, float8 *dS2)
-{
-    //vec derivs
-    float16 dV;
-    dV.s012 = -sym_mv(sym_mm(eig_mpinv(D.x, D, V), dA), V.s012);
-    dV.s456 = -sym_mv(sym_mm(eig_mpinv(D.y, D, V), dA), V.s456);
-    dV.s89a = -sym_mv(sym_mm(eig_mpinv(D.z, D, V), dA), V.s89a);
-
-    //val derivs
-    float3  dD;
-    dD.x = dot(V.s012, sym_mv(dA, V.s012));
-    dD.y = dot(V.s456, sym_mv(dA, V.s456));
-    dD.z = dot(V.s89a, sym_mv(dA, V.s89a));
-    
-    //split derivs
-    float3 dD1;
-    float3 dD2;
-    eig_D1D2(dD, &dD1, &dD2);
-    
-    //split vals
-    float3 D1;
-    float3 D2;
-    eig_D1D2(D, &D1, &D2);
-    
-    //derivs
-    *dS1 = sym_mdmT(V, dD1) + sym_sumT(mtx_mm(mtx_md(dV,D1), mtx_mT(V) ));
-    *dS2 = sym_mdmT(V, dD2) + sym_sumT(mtx_mm(mtx_md(dV,D2), mtx_mT(V) ));
-
-    return;
-}
 
 
 //moore-penrose inverse
@@ -536,19 +583,6 @@ float8 eig_mpinv(float lam, float3 D, float16 V)
 }
 
 
-
-
-////derivative of energy wrt disp  d(energy+)/du
-//float eig_dpdu(float3 D, float16 V, float16 dU, float8 mat_prm)
-//{
-//    //derivatives of principal strains wrt perturbation
-//    float dD[3] = {dot(V[0], mtx_mv(dU,V)), dot(V[1], mtx_mv(dU,V[1])), dot(V[2], mtx_mv(dU,V[2]))};
-//    
-//    float trE = (D[0]+D[1]+D[2]);
-//    
-//    //test pos trace for first part, inidividual eigs (primary strains) for second part
-//    return mat_prm.s0*(trE>0e0f)*(dD[0] + dD[1] + dD[2]) + 2e0f*mat_prm.s1*((D[0]>0e0f)*dD[0] + (D[1]>0e0f)*dD[1] + (D[2]>0e0f)*dD[2]);
-//}
 
 
 
@@ -668,7 +702,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
     //volume
     float vlm = dx.x*dx.y*dx.z;
     
-    printf("vtx1_pos1 %v3d\n", vtx1_pos1);
+//    printf("vtx1_pos1 %v3d\n", vtx1_pos1);
     
     //read 3x3x3
     float4  uu30[27]; //prev
@@ -734,11 +768,11 @@ kernel void vtx_assm(const  int3     vtx_dim,
                 //itp crack
                 float c0 = itp_u0.w;
                 float c1 = itp_u1.w;
-                float dc = c1 - c0;                                     //for heaviside
-                float cc[2] = {pown(1e0f - c1, 2), 2e0f*(c1 - 1e0f)};   //pre-calc
+                float dc = c1 - c0;                                             //for heaviside
+                float gg[3] = {pown(1e0f - c1, 2), 2e0f*(c1 - 1e0f), 2e0f};     //pre-calc  gg derivs
                 
                 //strain
-                float8 E = mec_e(du);
+                float8 E = mec_E(du);
                 float trE = sym_tr(E);
                 
                 //printf("%v8e\n", E); //ok
@@ -757,7 +791,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
                 //split stress
                 float8 S1 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
                 float8 S2 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
-//                mec_s12(D, V, mat_prm, &S1, &S2);
+                mec_S1S2(D, V, mat_prm, &S1, &S2);
                 
                 //                printf("%v8f\n",S1);
                 //                printf("%v8f\n",S2);
@@ -777,18 +811,16 @@ kernel void vtx_assm(const  int3     vtx_dim,
 //                    printf("\n");
                     
                     //strain
-                    float8 E1 = mec_e(du1);
+                    float8 E1 = mec_E(du1);
                     
                     //printf("%+v8f\n", E1); //ok
                     
                     //write
-                    //ff[dim1] += sym_tip(cc[0]*S1 + S2, E1)*qw;
-                    //ff[dim1] += sym_tip(mec_s(E, mat_prm), E1)*qw; //elas
-                    
+                    ff[dim1] += sym_tip(gg[0]*S1 + S2, E1)*qw;
                 }
                 
                 //rhs c
-                //ff[3] += ((cc[1]*p1 + mat_prm.s4*c1 + mat_prm.s6*(dc)*(dc<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s5*dot(du[3], bas_gg[vtx1_idx2]))*qw;
+                ff[3] += ((gg[1]*p1 + mat_prm.s4*c1 + mat_prm.s6*(dc)*(dc<0e0f))*bas_ee[vtx1_idx2] + mat_prm.s5*dot(du[3], bas_gg[vtx1_idx2]))*qw;
                 
                 //vtx2
                 for(int vtx2_idx2=0; vtx2_idx2<8; vtx2_idx2++)
@@ -802,7 +834,9 @@ kernel void vtx_assm(const  int3     vtx_dim,
                     global float* vv = (global float*)&J_vv[idx1];
                     
                     //cc write
-                    //vv[15] += ((2e0f*p1 + mat_prm.s4 + mat_prm.s6*(dc<0e0f))*bas_ee[vtx1_idx2]*bas_ee[vtx2_idx2] + mat_prm.s5*dot(bas_gg[vtx1_idx2], bas_gg[vtx2_idx2]))*qw;
+                    vv[15] += ((gg[2]*p1 + mat_prm.s4 + mat_prm.s6*(dc<0e0f))*bas_ee[vtx1_idx2]*bas_ee[vtx2_idx2])*qw;
+                    vv[15] += (mat_prm.s5*dot(bas_gg[vtx1_idx2], bas_gg[vtx2_idx2]))*qw;
+                    
                     
                     //dim1
                     for(int dim1=0; dim1<3; dim1++)
@@ -811,18 +845,18 @@ kernel void vtx_assm(const  int3     vtx_dim,
                         float16 du1 = bas_tens(dim1, bas_gg[vtx1_idx2]);
                         
                         //strain
-                        float8 E1 = mec_e(du1);
+                        float8 E1 = mec_E(du1);
                         
                         //idx
                         int idx3 = 4*dim1 + 3;
                         int idx4 = 12 + dim1;
                         
                         //coupling uc/cu
-                        //float cpl = cc[1]*eig_dpdu(D, V, du1, mat_prm)*bas_ee[vtx1_idx2]*qw;
+                        float cpl = gg[1]*mec_dp1(D, V, du1, mat_prm)*bas_ee[vtx1_idx2]*qw; //not sure about this yet
                         
                         //uc write
-                        //vv[idx3] += cpl;
-                        //vv[idx4] += cpl;
+                        vv[idx3] += cpl;
+                        vv[idx4] += cpl;
                         
                         //dim2
                         for(int dim2=0; dim2<3; dim2++)
@@ -831,33 +865,26 @@ kernel void vtx_assm(const  int3     vtx_dim,
                             float16 du2 = bas_tens(dim1, bas_gg[vtx2_idx2]);
                             
                             //strain
-                            float8 E2 = mec_e(du2);
+                            float8 E2 = mec_E(du2);
                             float trE2 = sym_tr(E2);
                             
-                            //split stress (deriv)
+                            //split strain (deriv) jodlbauer2020
                             float8 dS1 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
                             float8 dS2 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
-                            eig_dS1dS2(E2, D, V, &dS1, &dS2);
+                            mec_dS1dS2(E2, D, V, &dS1, &dS2);
                             
 
-                            
-                            //stress (lam*tr(E)I + 2*mu*E, pos/neg)
+                            //stress (lam*tr(E)I + 2*mu*E, pos/neg) jodlbauer2020
                             dS1 = 2e0f*mat_prm.s1*dS1;
                             dS1.s035 += mat_prm.s0*(trE>=0e0f)*(trE2);      //if(trace of solution)then(trace of basis)
                             
                             dS2 = 2e0f*mat_prm.s1*dS2;
                             dS2.s035 += mat_prm.s0*(trE<=0e0f)*(trE2);
                             
-                            //                            //no split
-                            //                            dS = 2e0f*mat_prm.s1*dS;
-                            //                            dS.s035 += mat_prm.s0*(trE2);
-                            
                             //write uu
                             int idx2 = 4*dim1 + dim2;
-//                            vv[idx2] += (cc[0]*sym_tip(dS1, E1) + sym_tip(dS2, E1))*qw;
-                            //vv[idx2] += (sym_tip(dS, E1))*qw;//no split
-                            vv[idx2] += sym_tip(mec_s(E2, mat_prm), E1)*qw; //elas
-                            
+                            vv[idx2] += (gg[0]*sym_tip(dS1, E1) + sym_tip(dS2, E1))*qw;
+
                         } //dim2
                         
                     } //dim1
