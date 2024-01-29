@@ -57,15 +57,12 @@ float16 eig_vec(float8 A, float3 D);
 float8  eig_mpinv(float lam, float3 D, float16 V);
 
 
-
-
-
-
 /*
  ===================================
  constants
  ===================================
  */
+
 
 constant int3 off2[8] = {{0,0,0},{1,0,0},{0,1,0},{1,1,0},{0,0,1},{1,0,1},{0,1,1},{1,1,1}};
 
@@ -151,6 +148,7 @@ void bas_eval(float3 p, float ee[8])
     return;
 }
 
+
 //grad at qp
 void bas_grad(float3 p, float3 gg[8], float3 dx)
 {
@@ -174,6 +172,7 @@ void bas_grad(float3 p, float3 gg[8], float3 dx)
     
     return;
 }
+
 
 //interp eval
 float4 bas_itpe(float4 uu2[8], float bas_ee[8])
@@ -202,6 +201,7 @@ float16 bas_itpg(float4 uu2[8], float3 bas_gg[8])
     }
     return du;
 }
+
 
 //tensor basis gradient
 float16 bas_tens(int dim, float3 g)
@@ -900,7 +900,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
                         //coupling uc/cu
                         float cpl = gg[1]*mec_dp1(D, V, du1, mat_prm)*bas_ee[vtx1_idx2]*qw; //not sure about this yet
                         
-                        //uc write
+                        //uc write (symmetric?)
                         vv[idx3] += cpl;
                         vv[idx4] += cpl;
                         
@@ -908,7 +908,7 @@ kernel void vtx_assm(const  int3     vtx_dim,
                         for(int dim2=0; dim2<3; dim2++)
                         {
                             //tensor basis
-                            float16 du2 = bas_tens(dim1, bas_gg[vtx2_idx2]);
+                            float16 du2 = bas_tens(dim2, bas_gg[vtx2_idx2]);
                             
                             //strain
                             float8 E2 = mec_E(du2);
@@ -918,7 +918,6 @@ kernel void vtx_assm(const  int3     vtx_dim,
                             float8 dS1 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
                             float8 dS2 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
                             mec_dS1dS2(E2, D, V, &dS1, &dS2);
-                            
 
                             //stress (lam*tr(E)I + 2*mu*E, pos/neg) jodlbauer2020
                             dS1 = 2e0f*mat_prm.s1*dS1;
@@ -1064,7 +1063,10 @@ kernel void vtx_bnd4(const  int3    vtx_dim,
         global float* vv = (global float*)&J_vv[idx1];
         
         //cc row->I
-        vv[12] = 0e0f;
+        vv[3] = 0e0f;   //col
+        vv[7] = 0e0f;
+        vv[11] = 0e0f;
+        vv[12] = 0e0f;  //row
         vv[13] = 0e0f;
         vv[14] = 0e0f;
         vv[15] = vtx2_bnd1*(vtx1_idx1==vtx2_idx1);
@@ -1084,8 +1086,8 @@ kernel void vtx_step(const  int3    vtx_dim,
     int3 vtx1_pos1  = {get_global_id(0), get_global_id(1), get_global_id(2)};
     int  vtx1_idx1 = fn_idx1(vtx1_pos1, vtx_dim);
     
-    //step
-    U1[vtx1_idx1] = U0[vtx1_idx1] - 0.5f*U1[vtx1_idx1];
+    //step (U1 contains (J^-1)F1
+    U1[vtx1_idx1] = U0[vtx1_idx1] - 0.75f*U1[vtx1_idx1];
     
     return;
 }

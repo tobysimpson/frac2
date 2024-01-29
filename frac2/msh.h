@@ -54,7 +54,7 @@ void msh_init(struct msh_obj *msh)
     msh->mat_prm.s3 = 2e0f*msh->dx.x;                                   //constant  ls or eps = length scale
     msh->mat_prm.s4 = msh->mat_prm.s2/msh->mat_prm.s3;                  //Gc/ls     (pre-calc)
     msh->mat_prm.s5 = msh->mat_prm.s2*msh->mat_prm.s3;                  //Gc*ls     (pre-calc)
-    msh->mat_prm.s6 = msh->mat_prm.s4*(powf(1e-2f,-2e0f) - 1e0f);   //gamma     tau_irr = 1e-2 (kopa2023 eq7) gamma = (gc/ls)*(1/tau^2 - 1)
+    msh->mat_prm.s6 = msh->mat_prm.s4*(powf(1e-2f,-2e0f) - 1e0f);       //gamma     tau_irr = 1e-2 (kopa2023 eq7) gamma = (gc/ls)*(1/tau^2 - 1)
     msh->mat_prm.s7 = 0e0f;                                             //displacement bc
 
     

@@ -63,11 +63,11 @@
 		DAF764192B5182CB003B09FF /* frac2 */ = {
 			isa = PBXGroup;
 			children = (
-				DAF7641A2B5182CB003B09FF /* main.c */,
 				DAF764212B5184B0003B09FF /* msh.h */,
 				DAF764222B5184BC003B09FF /* ocl.h */,
 				DAF764242B5184D2003B09FF /* slv.h */,
 				DAF764232B5184C7003B09FF /* io.h */,
+				DAF7641A2B5182CB003B09FF /* main.c */,
 				DAF764252B5184EA003B09FF /* prg.cl */,
 			);
 			path = frac2;

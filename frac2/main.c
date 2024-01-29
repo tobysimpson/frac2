@@ -47,8 +47,8 @@ int main(int argc, const char * argv[])
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd1, 3, NULL, nv, NULL, 0, NULL, NULL);
     
     //disp
-    msh.mat_prm.s7 = 1e-1f;                                                                                      //update
-    ocl.err = clSetKernelArg(ocl.vtx_bnd2,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                         //refresh
+    msh.mat_prm.s7 = 1e-1f;                                                                                         //update
+    ocl.err = clSetKernelArg(ocl.vtx_bnd2,  1, sizeof(cl_float8), (void*)&msh.mat_prm);                             //refresh
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ocl.vtx_bnd2, 3, NULL, nv, NULL, 0, NULL, NULL);
     
     //copy U1->U0
@@ -121,7 +121,7 @@ int main(int argc, const char * argv[])
         //solve
         slv_mtx(&msh, &ocl);
         
-        //copy U1->U0
+        //copy to prev U1->U0
         ocl.err = clEnqueueCopyBuffer( ocl.command_queue, ocl.dev.U1, ocl.dev.U0, 0, 0, msh.nv_tot*sizeof(cl_float4), 0, NULL, NULL);
         
         //write step to U1
