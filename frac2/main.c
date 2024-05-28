@@ -15,6 +15,9 @@
 #include "slv.h"
 #include "io.h"
 
+//monolithic assembly u and c together - more recent kernels
+
+
 //for later
 //clSetKernelArg(myKernel, 0, sizeof(cl_int), &myVariable).
 

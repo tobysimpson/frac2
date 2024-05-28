@@ -64,7 +64,6 @@ int slv_mtx(struct msh_obj *msh, struct ocl_obj *ocl)
     
     SparseSolve(SparseGMRES(options), A, f, u);
     
-
     //iterate
 //    SparseSolve(SparseConjugateGradient(), A, f, u);    // SparsePreconditionerDiagonal/SparsePreconditionerDiagScaling
 //    SparseSolve(SparseGMRES(), A, f, u);

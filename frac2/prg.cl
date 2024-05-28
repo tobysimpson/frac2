@@ -523,7 +523,7 @@ float mec_dp1(float3 D, float16 V, float16 dU, float8 mat_prm)
  ===================================
  */
 
-//eigenvalues (A real symm) - Deledalle2017
+//eigenvalues (A real symm) - Deledalle2017 - this was wrong!
 float3 eig_val(float8 A)
 {
     //weird layout
@@ -535,7 +535,7 @@ float3 eig_val(float8 A)
     float f = A.s2;
     
     float x1 = a*a + b*b + c*c - a*b - a*c - b*c + 3e0f*(d*d + e*e + f*f);
-    float x2 = -(2e0f*a - b - c)*(2e0f*b - a - c)*(2e0f*c - a - b) + 9e0f*(2e0f*c - a - b)*d*d + (2e0f*b - a - c)*f*f + (2e0f*a - b - c)*e*e - 5.4e1f*d*e*f;
+    float x2 = -(2e0f*a - b - c)*(2e0f*b - a - c)*(2e0f*c - a - b) + 9e0f*((2e0f*c - a - b)*d*d + (2e0f*b - a - c)*f*f + (2e0f*a - b - c)*e*e - 5.4e1f*d*e*f);
     
     float p1 = atan(sqrt(4e0f*x1*x1*x1 - x2*x2)/x2);
     
@@ -825,7 +825,6 @@ kernel void vtx_assm(const  int3     vtx_dim,
                 float3  D = eig_val(E);
                 float16 V = eig_vec(E, D);
                 
-                
                 //printf("%e %e %e\n", D[0],D[1],D[2]);
                 //printf("%v3e %v3e %v3e\n", V[0],V[1],V[2]);
                 
@@ -883,7 +882,6 @@ kernel void vtx_assm(const  int3     vtx_dim,
                     vv[15] += ((gg[2]*p1 + mat_prm.s4 + mat_prm.s6*(dc<0e0f))*bas_ee[vtx1_idx2]*bas_ee[vtx2_idx2])*qw;
                     vv[15] += (mat_prm.s5*dot(bas_gg[vtx1_idx2], bas_gg[vtx2_idx2]))*qw;
                     
-                    
                     //dim1
                     for(int dim1=0; dim1<3; dim1++)
                     {
@@ -911,8 +909,8 @@ kernel void vtx_assm(const  int3     vtx_dim,
                             float16 du2 = bas_tens(dim2, bas_gg[vtx2_idx2]);
                             
                             //strain
-                            float8 E2 = mec_E(du2);
-                            float trE2 = sym_tr(E2);
+                            float8 E2   = mec_E(du2);
+                            float  trE2 = sym_tr(E2);
                             
                             //split strain (deriv) jodlbauer2020
                             float8 dS1 = (float8){0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f, 0e0f};
