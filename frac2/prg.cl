@@ -523,7 +523,7 @@ float mec_dp1(float3 D, float16 V, float16 dU, float8 mat_prm)
  ===================================
  */
 
-//eigenvalues (A real symm) - Deledalle2017 - this was wrong!
+//eigenvalues (A real symm) - Deledalle2017 was wrong now fixed maybe? see frac1 is correct
 float3 eig_val(float8 A)
 {
     //weird layout
